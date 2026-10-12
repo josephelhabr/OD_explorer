@@ -1,0 +1,1136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Explore and filter city-to-city origin-destination flows in Texas.">
+  <meta name="od-explorer-version" content="v4-2026-10-12">
+  <title>Texas OD Flow Explorer · v4</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root{--ink:#293249;--muted:#5b6983;--line:#dce0e8;--paper:#fff;--soft:#eff1f5;--accent:#0056a9;--accent-dark:#004386;--purple:#803273;--right:420px;--left:286px}
+    *{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);font-size:13px;background:#0b0d11}
+    button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:default}button,input,select,a{outline-offset:3px}
+    button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent)}
+    button{border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);padding:8px 10px;line-height:1.25}
+    button:hover:not(:disabled){background:#f2f3f7}button.primary{background:var(--accent);border-color:#004a91;color:#fff;font-weight:700}
+    button.primary:hover:not(:disabled){background:#00478c}button.small{padding:5px 8px;font-size:12px}.icon-button{border:0;padding:5px;display:grid;place-items:center}
+    .icon{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+    .app-header{height:56px;background:#eef0f4;border-bottom:1px solid #d6dbe5;display:flex;align-items:center;gap:12px;padding:0 16px;position:relative;z-index:1000}
+    .brand-symbol{width:27px;height:27px;color:var(--accent)}.brand{font-size:16px;font-weight:700;letter-spacing:-.2px}.brand small{font-weight:400;color:var(--muted);font-size:11px;letter-spacing:1.1px;margin-right:8px}
+    .header-note{font-size:11px;color:var(--muted);padding-left:12px;border-left:1px solid #c9ced9}.header-actions{margin-left:auto;display:flex;gap:7px;align-items:center}
+    .header-actions button{display:flex;gap:6px;align-items:center}.workspace{height:calc(100vh - 56px);height:calc(100dvh - 56px);position:relative;overflow:hidden}
+    #map{position:absolute;inset:0 var(--right) 0 0;background:#0b0d11}
+    .left-panel{position:absolute;left:12px;top:12px;bottom:139px;width:var(--left);z-index:600;background:#fff;border:1px solid #cfd5df;border-radius:6px;box-shadow:0 2px 10px #0003;overflow:auto}
+    .panel-heading{display:flex;align-items:center;gap:9px;padding:12px 13px;border-bottom:1px solid var(--line);font-weight:700;min-height:46px}
+    .panel-heading .icon-button{margin-left:auto;color:var(--muted)}.section{padding:14px 13px;border-bottom:1px solid var(--line)}
+    .section-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;margin:0 0 12px}.section-title .icon{color:#69758d}
+    .section-label{font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);margin:0 0 11px}
+    label.field{display:block;margin:0 0 12px;color:var(--muted);font-size:12px}label.field:last-child{margin-bottom:0}
+    label.field>span{display:block;margin-bottom:5px}input:not([type=checkbox]):not([type=range]),select{width:100%;min-width:0;border:1px solid #b7c0d0;border-radius:3px;padding:7px 8px;background:#fff;color:var(--ink);min-height:33px}
+    input[type=range]{width:100%;accent-color:var(--accent)}input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;margin:0;flex-shrink:0}
+    .check{display:flex;align-items:center;gap:8px;margin:0 0 10px;line-height:1.35}.layer-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px}
+    .subtle{color:var(--muted);font-size:11px;line-height:1.5}.layer-note{font-size:11px;color:var(--muted);padding:0 0 10px 23px}
+    .button-row{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.two-columns{display:grid;grid-template-columns:1fr 1fr;gap:9px}.two-columns label.field{margin-bottom:0}
+    .range-line{display:flex;justify-content:space-between;margin-bottom:7px;font-size:12px;color:var(--muted)}.swatch{height:12px;background:linear-gradient(90deg,#77316f,#b13e70,#e56655,#ffa143,#ffda40);border-radius:2px;margin-bottom:10px}
+    .context-row{display:flex;align-items:center;gap:7px;margin:9px 0}.context-row label{display:flex;gap:8px;align-items:center;min-width:0;flex:1}.context-row label span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.context-row button{font-size:16px;padding:1px 6px}
+    .legend{position:absolute;left:12px;bottom:27px;width:var(--left);z-index:600;background:#fffffff2;border:1px solid #cfd5df;border-radius:6px;padding:12px 13px}
+    .legend-title{font-weight:700;margin-bottom:4px}.legend-subtitle{font-size:11px;color:var(--muted);margin-bottom:8px}.legend-bar{display:flex;height:9px;border-radius:2px;overflow:hidden}.legend-bar span{flex:1}
+    .legend-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin:5px 0 10px;gap:3px}.dot-key{display:flex;align-items:center;gap:9px;font-size:12px}
+    .dot-key i{display:block;width:10px;height:10px;border-radius:50%;background:#ffda40;border:2px solid #825632}
+    .right-panel{position:absolute;right:0;top:0;bottom:0;width:var(--right);z-index:650;background:#fff;border-left:1px solid #d4d9e2;display:flex;flex-direction:column}
+    .right-title{display:flex;gap:9px;align-items:center;padding:14px 17px;border-bottom:1px solid var(--line);font-size:14px;font-weight:700;min-height:49px}
+    .right-title .badge{margin-left:auto;background:#e7eff9;color:var(--accent);font-size:11px;font-weight:400;border-radius:10px;padding:3px 8px}
+    .filter-area{padding:14px 17px;border-bottom:1px solid var(--line);max-height:62%;overflow:auto;flex-shrink:0;background:#fff}
+    .filter-card{background:var(--soft);border:1px solid #e6e9ef;padding:12px;border-radius:4px}.filter-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .filter-heading strong{font-size:13px}.text-button{border:0;background:transparent;color:#5c647d;font-size:11px;padding:3px}
+    .filter-help{font-size:10px;color:var(--muted);line-height:1.4;margin-top:7px}.condition{margin:9px 0;padding:9px;background:#fff;border:1px solid #d7dce6;border-radius:4px}
+    .condition-head{display:grid;grid-template-columns:1fr 24px;gap:5px;margin-bottom:6px}.condition-head button{border:0;padding:0;color:#6b7486;font-size:19px}
+    .condition-value{margin-top:6px}.condition-value.range{display:grid;grid-template-columns:1fr 1fr;gap:7px}.condition select,.condition input{font-size:11px;min-height:29px!important;padding:5px 6px!important}
+    #add-condition{width:100%;border:1px dashed #b9c1d1;background:#f8f9fb;color:#645071;font-size:12px;margin-top:6px}
+    .filter-divider{margin-top:15px;padding-top:13px;border-top:1px solid #d6dce6}.filter-block-title{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:8px}.filter-block-title button{font-weight:400;font-size:10px;padding:3px 6px}
+    .filter-mini-check{font-size:10px;color:var(--muted);margin-top:7px;margin-bottom:0}.filter-mini-check input{width:12px;height:12px}
+    .table-options{display:flex;gap:7px;align-items:center;padding:0 17px 7px;color:var(--muted);font-size:10px}.table-options input{width:12px;height:12px}.table-options label{display:flex;align-items:center;gap:5px}
+    .filter-error{font-size:11px;color:#9d3a23;margin-top:8px;min-height:0}.summary-strip{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:13px 17px 9px}
+    .summary-strip strong{display:block;font-size:13px}.summary-strip small{color:var(--muted);font-size:11px}.export-controls{display:flex;gap:5px}
+    .table-wrapper{overflow:auto;flex:1;min-height:75px;padding:0 17px}.flow-table{border-collapse:collapse;width:100%;font-size:12px}
+    .flow-table th{position:sticky;top:0;text-align:left;background:#fff;z-index:1;border-bottom:1px solid #d4d9e3;padding:9px 6px;white-space:nowrap}
+    .flow-table th button{border:0;font-size:11px;font-weight:700;padding:0;background:transparent}.flow-table th.numeric,.flow-table td.numeric{text-align:right;font-variant-numeric:tabular-nums}
+    .flow-table td{padding:9px 6px;border-bottom:1px solid #edf0f4;white-space:nowrap;max-width:142px;overflow:hidden;text-overflow:ellipsis}
+    .flow-table tr:nth-child(even) td{background:#f2f3f6}.flow-table tbody tr[data-id]{cursor:pointer}.flow-table tbody tr[data-id]:hover td{background:#e7f1fb}.flow-table tbody tr.selected td{background:#d8e9fb}
+    .empty-row{text-align:center;padding:28px 12px!important;white-space:normal!important;color:var(--muted);line-height:1.6}
+    .pagination{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:10px 17px;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}.pagination .button-row{flex-wrap:nowrap}
+    .map-summary{position:absolute;z-index:500;top:16px;left:316px;right:calc(var(--right) + 55px);display:flex;justify-content:center;pointer-events:none}
+    .map-summary>div{display:flex;align-items:center;gap:15px;background:#eff1f5f2;box-shadow:0 2px 8px #0003;border-radius:5px;padding:9px 14px;max-width:100%}
+    .data-label{min-width:0;max-width:190px;font-size:11px}.data-label strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.data-label span{color:var(--muted);font-size:10px}.summary-number{border-left:1px solid #bfc6d3;padding-left:13px;white-space:nowrap}
+    .summary-number strong{font-size:13px;font-variant-numeric:tabular-nums}.summary-number small{display:block;font-size:9px;color:var(--muted);margin-top:2px}
+    .welcome{position:absolute;z-index:550;top:50%;left:calc(50% + var(--left)/2 - var(--right)/2);transform:translate(-50%,-50%);width:min(370px,42vw);background:#fffffff7;border:1px solid #cfd5df;border-radius:7px;padding:24px;box-shadow:0 8px 30px #0005}
+    .welcome h1{font-size:21px;line-height:1.2;margin:0 0 12px;letter-spacing:-.3px}.welcome p{font-size:13px;line-height:1.65;color:#59647a;margin:0 0 18px}.welcome button{width:100%;padding:11px}
+    .welcome .subtle{margin-top:11px}.welcome .eyebrow{font-size:10px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:10px}
+    .notice{position:absolute;z-index:700;bottom:30px;left:316px;right:calc(var(--right) + 20px);pointer-events:none;text-align:center}.notice>span{display:inline-block;background:#eaf3fc;color:#003f7b;border:1px solid #8cadd0;border-radius:4px;padding:9px 12px;max-width:100%;font-size:12px;box-shadow:0 2px 9px #0004}
+    .status-line{position:absolute;z-index:500;bottom:7px;left:316px;right:calc(var(--right) + 150px);color:#c0c7d4;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+    .left-hidden .left-panel,.left-hidden .legend{display:none}.left-hidden .map-summary,.left-hidden .notice,.left-hidden .status-line{left:62px}.left-hidden .welcome{left:calc(50% - var(--right)/2)}
+    .right-hidden #map{right:0}.right-hidden .right-panel{display:none}.right-hidden .map-summary{right:55px}.right-hidden .notice{right:20px}.right-hidden .status-line{right:150px}.right-hidden .welcome{left:calc(50% + var(--left)/2)}
+    .left-hidden.right-hidden .welcome{left:50%}.leaflet-top.leaflet-left{left:304px}.left-hidden .leaflet-top.leaflet-left{left:0}
+    .leaflet-bar{border:1px solid #adb5c4!important;border-radius:3px!important}.leaflet-bar a{color:#566481;background:#f1f2f6;border-bottom:1px solid #b7c0d0}.leaflet-bar a:hover{background:#fff}
+    .leaflet-tooltip{font-family:Arial,Helvetica,sans-serif;color:#2d3549;background:#fff;border:1px solid #d3d8e3;border-radius:3px;padding:8px 10px}.leaflet-tooltip.flow-tip strong{display:block;margin-bottom:5px;font-size:12px}
+    .leaflet-tooltip.city-label{border:0;background:#131722d9;color:#d2d9e5;box-shadow:none;font-size:11px;padding:2px 5px}.leaflet-tooltip.city-label:before{display:none}
+    .leaflet-control-attribution{font-size:9px!important;background:#0b0d11c9!important;color:#a7afbd!important}.leaflet-control-attribution a{color:#bbc2d1!important}
+    dialog{border:1px solid #c9d0de;border-radius:7px;padding:0;width:min(600px,calc(100vw - 30px));max-height:86vh;color:var(--ink);box-shadow:0 12px 80px #0007}
+    dialog::backdrop{background:#1118287a}.dialog-heading{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line);font-weight:700;font-size:16px}
+    .dialog-body{padding:20px;overflow:auto;max-height:65vh}.dialog-body p{line-height:1.6;color:var(--muted);margin:0 0 15px}.dialog-body h3{font-size:13px;margin:18px 0 7px}
+    .dialog-footer{padding:12px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end}.dialog-body code{background:#f0f1f6;padding:2px 4px;font-size:11px}
+    .detail-metrics{display:grid;grid-template-columns:1fr 1fr;gap:17px 20px;padding:10px 0 18px}.detail-metrics strong{font-size:22px;display:block;color:var(--accent)}.detail-metrics small{color:var(--muted);font-size:11px}.detail-table{border-collapse:collapse;width:100%;font-size:12px}.detail-table th,.detail-table td{padding:8px 6px;text-align:left;vertical-align:top;border-bottom:1px solid #e7eaf0;overflow-wrap:anywhere}.detail-table th{color:var(--muted);font-weight:400;width:42%}
+    .detail-table tr:nth-child(even){background:#f4f5f8}.load-status{font-size:11px;color:var(--muted);line-height:1.5;margin-top:8px;overflow-wrap:anywhere}
+    .busy #dataset-switch{opacity:.6}.od-flow-canvas{position:absolute;pointer-events:none}
+    @media(max-width:1200px){:root{--right:365px;--left:254px}.map-summary,.notice,.status-line{left:284px}.leaflet-top.leaflet-left{left:272px}.data-label{max-width:100px}.map-summary>div{gap:9px;padding:8px}.summary-number{padding-left:8px}.header-note{display:none}}
+    @media(max-width:950px){:root{--right:340px;--left:245px}.workspace:not(.left-hidden) .map-summary{display:none}.welcome{width:300px;max-width:calc(100vw - var(--right) - 30px);left:calc((100% - var(--right))/2)}.workspace.right-hidden .welcome{max-width:370px;left:50%}.app-header{padding:0 10px}.brand{font-size:14px}.brand small{display:none}.header-actions button span{display:none}.left-panel{bottom:135px}.legend{width:245px}.filter-area{padding:12px}.right-title{padding:13px}.summary-strip,.pagination{padding-left:12px;padding-right:12px}.table-wrapper{padding:0 12px}}
+    @media(max-width:650px){:root{--right:min(340px,100vw);--left:245px}.brand{font-size:13px}.app-header{gap:7px}.header-actions{gap:4px}.header-actions button{padding:7px}.right-panel{box-shadow:-5px 0 20px #0003}.workspace:not(.right-hidden) #map{right:0}.map-summary{display:none}.notice,.status-line{left:10px!important;right:10px!important}.welcome{left:50%!important;width:310px;max-width:calc(100vw - 30px)!important}.left-panel{bottom:155px;max-height:calc(100% - 175px)}.legend{bottom:30px}.flow-table td{max-width:120px}.workspace.right-hidden .right-panel{display:none}}
+    .od-dark-basemap{filter:grayscale(1) invert(1) brightness(.78) contrast(.9)}
+      .range-line{align-items:center}.appearance-value{display:flex;align-items:center;justify-content:flex-end;gap:5px}.range-line .appearance-value input{width:70px;min-height:28px;padding:4px 6px;font-size:12px;text-align:right;font-variant-numeric:tabular-nums}.appearance-value span{width:14px}.appearance-error{font-size:10px;color:#9d3a23;line-height:1.4}.appearance-error:empty{display:none}.appearance-value input[aria-invalid="true"]{border-color:#b0442c}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.legend-labels.single-value{justify-content:center}
+</style>
+</head>
+<body>
+  <svg style="position:absolute;width:0;height:0" aria-hidden="true"><defs>
+    <symbol id="i-flow" viewBox="0 0 24 24"><path d="M3 6h12m-3-3 3 3-3 3M21 18H9m3-3-3 3 3 3M4 12h16"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/></symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/><circle cx="8" cy="6" r="2" fill="currentColor"/><circle cx="16" cy="12" r="2" fill="currentColor"/><circle cx="10" cy="18" r="2" fill="currentColor"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></symbol>
+    <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 9h18M9 9v11M15 9v11"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  </defs></svg>
+  <header class="app-header">
+    <svg class="icon brand-symbol" aria-hidden="true"><use href="#i-flow"/></svg>
+    <div class="brand"><small>TEXAS</small>OD Flow Explorer</div>
+    <span id="build-version" title="Build 2026-10-12 · Roadway dataset" style="font-size:11px;color:var(--accent);font-weight:700;white-space:nowrap">v4</span>
+    <div class="header-note">Texas city pairs · Interactive analysis</div>
+    <div class="header-actions">
+      <button id="toggle-layers" title="Show or hide map layers" aria-expanded="true"><svg class="icon" aria-hidden="true"><use href="#i-layers"/></svg><span>Layers</span></button>
+      <button id="toggle-analysis" title="Show or hide analysis panel" aria-expanded="true"><svg class="icon" aria-hidden="true"><use href="#i-filter"/></svg><span>Analysis</span></button>
+      <button id="help" class="icon-button" title="Help and GitHub Pages setup" aria-label="Help"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg></button>
+    </div>
+  </header>
+  <main class="workspace" id="workspace">
+    <div id="map" role="region" aria-label="Interactive Texas origin-destination map"></div>
+    <aside class="left-panel" aria-label="Map layers and styling">
+      <div class="panel-heading"><svg class="icon" aria-hidden="true"><use href="#i-layers"/></svg>Map Layers<button class="icon-button" id="close-layers" aria-label="Hide map layers">‹</button></div>
+      <section class="section">
+        <label class="field"><span class="section-label">OD dataset</span><select id="dataset-switch" aria-label="Choose OD dataset" disabled><option>On-roadway pairs · 500+ weekday trips</option></select></label>
+        <div class="subtle" id="dataset-count">2 available datasets</div>
+        <p class="subtle" id="dataset-note" style="margin:8px 0 0">This source includes only pairs with at least 500 weekday trips.</p>
+      </section>
+      <section class="section">
+        <h2 class="section-title"><svg class="icon" aria-hidden="true"><use href="#i-eye"/></svg>Geography</h2>
+        <label class="field"><span>Basemap</span><select id="basemap"><option value="dark">Dark map</option><option value="light">Light map</option><option value="none">No basemap</option></select></label>
+        <label class="check"><input type="checkbox" id="show-flows" checked><span class="layer-name" id="primary-label">OD flows</span></label>
+        <div class="layer-note" id="layer-note">Opening the Texas city-pair dataset…</div>
+        <div class="subtle" id="map-progress" role="status" hidden></div>
+        <label class="check"><input type="checkbox" id="show-cities" checked><span>City locations</span></label>
+        <label class="check"><input type="checkbox" id="show-labels"><span>City labels</span></label>
+        <div class="button-row"><button id="fit-map" class="small" disabled>Fit visible flows</button></div>
+      </section>
+      <section class="section">
+        <h2 class="section-title"><svg class="icon" aria-hidden="true"><use href="#i-flow"/></svg>Flow Appearance</h2>
+        <label class="field"><span>Color by</span><select id="color-field" disabled><option value="">Single color · route overlap</option></select></label>
+        <div id="single-color-controls" hidden>
+          <label class="field"><span>Line color</span><input id="line-color" type="color" value="#58b7ff" aria-label="Single line color" style="height:36px;padding:3px;cursor:pointer"></label>
+          <button id="overlap-preset" class="small" style="width:100%">Use 5% opacity</button>
+          <p class="subtle">Each pair contributes one line. At low opacity, brighter roads show more overlapping routes.</p>
+        </div>
+        <div id="classification-controls">
+          <div class="swatch" aria-label="Purple to orange to yellow color palette"></div>
+          <div class="two-columns">
+            <label class="field"><span>Classification</span><select id="classification"><option value="quantile">Quantiles</option><option value="equal">Equal intervals</option><option value="jenks">Natural breaks (Jenks)</option></select></label>
+            <label class="field"><span>Classes</span><select id="classes"><option value="5">5</option><option value="7">7</option><option value="3">3</option></select></label>
+          </div>
+          <p class="subtle">Color breaks and scaled widths update to match the current filters.</p>
+        </div>
+        <div class="range-line"><label for="opacity">Line opacity</label><div class="appearance-value"><input id="opacity-number" type="number" min="0" max="100" step="any" value="100" aria-label="Line opacity in percent" aria-describedby="opacity-error"><span>%</span></div><output id="opacity-value" class="sr-only">100%</output></div>
+        <input id="opacity" type="range" min="0" max="100" step="any" value="100" aria-label="Line opacity">
+        <div id="opacity-error" class="appearance-error" role="status"></div>
+        <div class="range-line" style="margin-top:12px"><label for="width">Line width</label><div class="appearance-value"><input id="width-number" type="number" min=".25" max="12" step="any" value="2" aria-label="Line width in pixels" aria-describedby="width-error"><span>px</span></div><output id="width-value" class="sr-only">2 px</output></div>
+        <input id="width" type="range" min=".25" max="12" step="any" value="2" aria-label="Line width">
+        <div id="width-error" class="appearance-error" role="status"></div>
+        <label class="check" style="margin:12px 0 0"><input type="checkbox" id="scale-width"><span>Scale width by color value</span></label>
+      </section>
+    </aside>
+    <div class="map-summary" aria-live="polite"><div>
+      <div class="data-label"><strong id="dataset-label">On-roadway pairs</strong><span id="dataset-subtitle">Opening dataset…</span></div>
+      <div class="summary-number"><strong id="pair-metric">—</strong><small>FILTERED PAIRS</small></div>
+      <div class="summary-number"><strong id="trip-metric">—</strong><small>WEEKDAY TRIPS</small></div>
+    </div></div>
+    <div class="welcome" id="welcome" role="status" aria-live="polite">
+      <div class="eyebrow">TEXAS CITY-PAIR ANALYSIS</div>
+      <h1 id="loading-title">Opening Texas OD flows</h1>
+      <p id="loading-note">Loading the city-pair dataset. Your filters will be ready shortly.</p>
+      <button class="primary" id="retry-dataset" hidden>Retry</button>
+    </div>
+    <aside class="right-panel" aria-label="Filters and origin-destination table">
+      <div class="right-title"><svg class="icon" aria-hidden="true"><use href="#i-filter"/></svg>OD Analysis<span class="badge" id="condition-badge">No filters</span></div>
+      <div class="filter-area">
+        <div class="filter-card">
+          <div class="filter-heading"><strong>Filters</strong><button class="text-button" id="reset-filters" disabled>Reset all</button></div>
+          <div class="filter-block" id="distance-filter">
+            <div class="filter-block-title"><span>Road distance · miles</span><button id="distance-preset" disabled title="Set road distance greater than 50 miles">Over 50 mi</button></div>
+            <div class="two-columns">
+              <label class="field"><span>Minimum</span><input id="distance-min" type="number" min="0" step="any" placeholder="No minimum" disabled></label>
+              <label class="field"><span>Maximum</span><input id="distance-max" type="number" min="0" step="any" placeholder="No maximum" disabled></label>
+            </div>
+            <label class="check filter-mini-check"><input type="checkbox" id="distance-exclusive" disabled><span>Exclude the minimum value itself</span></label>
+          </div>
+          <div class="filter-divider" id="trip-filter">
+            <label class="field"><span>Weekday trip filter</span><select id="trip-mode" disabled><option value="all">All available pairs</option><option value="top-percent">Top percentile</option><option value="bottom-percent">Bottom percentile</option><option value="top-rank">Top N pairs</option><option value="bottom-rank">Bottom N pairs</option><option value="range">Value range</option></select></label>
+            <div id="trip-controls" style="margin-top:10px;display:none"></div>
+            <div class="filter-help" id="trip-help">Ranking follows the other filters. Percentile ties are included.</div>
+          </div>
+          <div class="filter-divider" id="area-filter">
+            <label class="field"><span>Within the same urban area</span><select id="area-mode" disabled><option value="all">Include all pairs</option><option value="exclude">Exclude same-area pairs</option><option value="distance-exception">Exclude, with a mileage exception</option></select></label>
+            <div id="area-distance-control" hidden>
+              <label class="field"><span>Allow same-area pairs with road miles ≥</span><input id="area-min-miles" type="number" min="0" step="any" value="20" disabled></label>
+              <div class="filter-help">The minimum is inclusive. All other filters still apply.</div>
+            </div>
+            <div class="filter-help" id="area-help">Uses the supplied urban-area labels. Unassigned areas (0) remain included.</div>
+          </div>
+          <div class="filter-divider" id="city-filter">
+            <div class="two-columns">
+              <label class="field"><span>City name contains</span><input id="city-search" type="search" placeholder="Any city…" list="city-options" disabled></label>
+              <label class="field"><span>Connected to (optional)</span><input id="city-peer" type="search" placeholder="A second city…" list="city-options" disabled></label>
+            </div>
+            <datalist id="city-options"></datalist>
+            <label class="field" style="margin-top:10px"><span>Search a single city in</span><select id="city-role" disabled><option value="either">Either endpoint</option><option value="a">City A</option><option value="b">City B</option></select></label>
+            <div class="filter-help" id="city-help">Fill both city boxes to find a pair in either endpoint order.</div>
+          </div>
+          <div class="filter-divider" id="population-filter">
+            <div class="filter-block-title">City population · 2024</div>
+            <label class="field"><span>Apply population range to</span><select id="population-scope" disabled><option value="either">Either city</option><option value="both">Both cities</option><option value="smaller">Smaller city</option><option value="larger">Larger city</option><option value="a">City A</option><option value="b">City B</option></select></label>
+            <div class="two-columns">
+              <label class="field"><span>Minimum</span><input id="population-min" type="number" min="0" step="1" placeholder="No minimum" disabled></label>
+              <label class="field"><span>Maximum</span><input id="population-max" type="number" min="0" step="1" placeholder="No maximum" disabled></label>
+            </div>
+          </div>
+          <details class="filter-divider" id="advanced-filters"><summary class="section-label" style="cursor:pointer;margin:0">Additional attribute conditions · match all</summary>
+            <div id="conditions"></div>
+            <button id="add-condition" disabled>+ Add an attribute condition</button>
+          </details>
+          <div class="filter-error" id="filter-error" role="status"></div>
+        </div>
+      </div>
+      <div class="summary-strip">
+        <div><strong>City-pair table</strong><small id="table-summary">Waiting for data</small></div>
+        <div class="export-controls"><button class="small primary" id="export-csv" disabled title="Download all filtered attributes as CSV">CSV ↓</button><button class="small" id="export-geojson" disabled title="Download filtered routes and all attributes">GeoJSON ↓</button></div>
+      </div>
+      <div class="table-options"><label><input type="checkbox" id="table-population" disabled>Show city populations</label></div>
+      <div class="table-wrapper">
+        <table class="flow-table" aria-label="Filtered origin-destination pairs">
+          <thead><tr>
+            <th scope="col"><button data-sort="a">City A <span id="sort-a"></span></button></th>
+            <th scope="col"><button data-sort="b">City B <span id="sort-b"></span></button></th>
+            <th scope="col" class="numeric"><button data-sort="trips">Weekday trips <span id="sort-trips">↓</span></button></th>
+            <th scope="col" class="numeric" id="distance-heading" hidden><button data-sort="distance">Miles <span id="sort-distance"></span></button></th>
+            <th scope="col" class="numeric" id="population-a-heading" hidden><button data-sort="populationA">Pop. A <span id="sort-populationA"></span></button></th>
+            <th scope="col" class="numeric" id="population-b-heading" hidden><button data-sort="populationB">Pop. B <span id="sort-populationB"></span></button></th>
+          </tr></thead>
+          <tbody id="table-body"><tr><td colspan="4" class="empty-row">Opening the Texas dataset…<br>Click a route or row to inspect all attributes.</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination"><span id="page-summary">0 pairs</span><div class="button-row"><button class="small" id="previous-page" disabled aria-label="Previous page">‹</button><button class="small" id="next-page" disabled aria-label="Next page">›</button></div></div>
+    </aside>
+    <div class="legend" aria-label="Map legend">
+      <div class="legend-title" id="legend-title">OD flows</div><div class="legend-subtitle" id="legend-subtitle">Opening the color scale…</div>
+      <div class="legend-bar" id="legend-bar"></div><div class="legend-labels" id="legend-labels"></div>
+      <div class="dot-key"><i></i>City location</div>
+    </div>
+    <div class="notice" id="notice" role="status" hidden><span></span></div>
+    <div class="status-line" id="status-line">Texas · Opening city-pair flows…</div>
+  </main>
+  <dialog id="detail-dialog">
+    <div class="dialog-heading"><span id="detail-title">City pair</span><button class="icon-button" data-close="detail-dialog" aria-label="Close pair details">×</button></div>
+    <div class="dialog-body"><div class="detail-metrics" id="detail-metrics"></div><table class="detail-table" aria-label="All attributes for selected city pair"><tbody id="detail-body"></tbody></table></div>
+    <div class="dialog-footer"><button data-close="detail-dialog">Close</button></div>
+  </dialog>
+  <dialog id="help-dialog">
+    <div class="dialog-heading">About this explorer<button class="icon-button" data-close="help-dialog" aria-label="Close help">×</button></div>
+    <div class="dialog-body">
+      <p>Explore Texas city pairs using bidirectional weekday trips, road miles, and city populations. The on-roadway dataset opens automatically with 4,797 pairs and includes only pairs with at least 500 weekday trips. Use the dataset selector in Map Layers to switch to the original 55,088-pair dataset. Filters reset when switching datasets.</p>
+      <h3>Filter and inspect</h3>
+      <p>Search one city or fill both city boxes to find a pair in either endpoint order. Filter weekday trips by percentile, top/bottom N, or value range. Set road-mile and population ranges, or add conditions on the available attributes. Filters are combined with AND. Ranking follows the other filters; percentile thresholds include ties. Top/bottom N uses source order to break ties. Click a route or table row to inspect its attributes.</p>
+      <p>Population ranges can match either city, both cities, the smaller or larger city, or one endpoint. Smaller/larger comparisons require both populations. Missing values are excluded from an active numeric range. Range bounds are inclusive except when “Exclude the minimum value itself” is checked for road miles. The Over 50 mi shortcut sets distance strictly greater than 50. No distance or population cutoff is applied automatically.</p>
+      <p>Use Within the same urban area to include all pairs, exclude same-area pairs, or allow them only at or above a chosen road-mile minimum. Area matches use the supplied urban-area labels; 0, missing, and unassigned labels are not treated as shared areas. The exception minimum is inclusive: at 20 miles, a same-area pair with exactly 20 road miles is allowed. Other road-mile limits and all other filters still apply. Weekday trip ranking follows this exclusion.</p>
+      <p>Weekday trips use the supplied actual bidirectional count for each dataset. Both directions are already included. Reverse pairs are not merged, and weekday trip counts are not doubled. Population and road-mile values are read as supplied. Reset all restores the selected dataset; the on-roadway source does not contain pairs below 500 weekday trips.</p>
+      <h3>Read the map</h3>
+      <p>Color classes and value-scaled widths use the current filtered pairs and update whenever filters change. Choose quantiles, equal intervals, or natural breaks (Jenks). Jenks minimizes variation within classes using every filtered numeric value, including the frequency of duplicates. If there are fewer distinct values than the selected number of Jenks classes, fewer classes are used. A single value produces one class. Quantiles use interpolated thresholds; ties can produce unequal class sizes. Gray indicates a missing color value. City dots use the supplied city coordinates. The table and totals include all filtered pairs, including routes hidden with the layer checkbox.</p>
+      <p>Routes are simplified to the current zoom level for responsive display. Every supplied route vertex is retained for export, including all 2,528,163 vertices in the on-roadway dataset. Stored coordinates are rounded to seven decimal places. The supplied road-mile values are used for analysis.</p>
+      <p>Type an opacity from 0 to 100% or a base line width from 0.25 to 12 pixels, or use the paired sliders. Typed values and sliders remain synchronized. Width scaling, when enabled, uses the filtered color-field range.</p>
+      <p>Choose Single color · route overlap under Color by to give every route the same color and width. Pick a line color and reduce opacity, or use the 5% shortcut. Each pair contributes one line regardless of its weekday trip count. Brighter sections indicate more overlapping city-pair routes. Select a numeric attribute to restore the classified view.</p>
+      <h3>Export</h3>
+      <p>CSV includes the available attributes for every filtered pair. GeoJSON includes those attributes and every route vertex at seven-decimal coordinate precision. Both datasets export the supplied bidirectional weekday count as <code>weekday_trips</code>. Other retained attribute names and values stay as supplied. Spreadsheet formula-like text is escaped in CSV. Refreshing resets the filters and restores the on-roadway dataset.</p>
+      <h3>Use on GitHub Pages</h3>
+      <p>Upload the updated <code>index.html</code> and <code>texas-roadway-01.bin</code> to your GitHub Pages publishing folder. Keep the existing <code>texas-od-01.bin</code> and <code>texas-od-02.bin</code> for the original dataset. Data files can sit beside <code>index.html</code> or inside a <code>data</code> folder beside it. Open the tool through GitHub Pages or a local web server.</p>
+      <p class="subtle">Use a current Chrome, Edge, Firefox, or Safari browser. Internet access is required for basemap tiles and the pinned Leaflet map library.</p>
+    </div>
+    <div class="dialog-footer"><button data-close="help-dialog">Close</button></div>
+  </dialog>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script id="od-core">
+
+  'use strict';
+  const ODCore = (() => {
+    function number(value) {
+      if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+      if (typeof value !== 'string' || value.trim() === '') return null;
+      const s = value.trim();
+      if (!/^[+-]?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d*)?(?:e[+-]?\d+)?$|^[+-]?\.\d+(?:e[+-]?\d+)?$/i.test(s)) return null;
+      const n = Number(s.replace(/,/g, ''));
+      return Number.isFinite(n) ? n : null;
+    }
+    function missing(value) { return value == null || (typeof value === 'string' && value.trim() === ''); }
+    function text(value) {
+      if (value == null) return '';
+      return typeof value === 'object' ? JSON.stringify(value) : String(value);
+    }
+    function escape(value) {
+      return text(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    function quantile(values, p) {
+      if (!values.length) return null;
+      const i = Math.max(0, Math.min(1, p)) * (values.length - 1), lo = Math.floor(i), hi = Math.ceil(i);
+      return values[lo] + (values[hi] - values[lo]) * (i - lo);
+    }
+    // Natural breaks minimize the weighted within-class sum of squares.
+    // Duplicate observations retain their frequency weight; no sampling is used.
+    function jenks(values, requested=5) {
+      const sorted=values.map(number).filter(value=>value!==null).sort((a,b)=>a-b);
+      const unique=[],frequency=[];
+      for(const value of sorted){const i=unique.length-1;if(i>=0&&unique[i]===value)frequency[i]++;else{unique.push(value);frequency.push(1);}}
+      const n=unique.length,k=Math.min(n,Math.max(1,Math.floor(requested)||1));
+      if(k<=1)return [];
+      const center=unique[0]/2+unique[n-1]/2,scale=Math.max(Math.abs(unique[0]-center),Math.abs(unique[n-1]-center),1);
+      const weight=new Float64Array(n+1),sum=new Float64Array(n+1),squares=new Float64Array(n+1);
+      for(let i=0;i<n;i++){const x=(unique[i]-center)/scale,w=frequency[i];weight[i+1]=weight[i]+w;sum[i+1]=sum[i]+w*x;squares[i+1]=squares[i]+w*x*x;}
+      function variance(start,end){const w=weight[end]-weight[start],s=sum[end]-sum[start];return Math.max(0,squares[end]-squares[start]-s*s/w);}
+      let previous=new Float64Array(n+1);previous.fill(Infinity);previous[0]=0;
+      const partitions=Array.from({length:k+1},()=>new Int32Array(n+1));
+      for(let group=1;group<=k;group++){
+        const current=new Float64Array(n+1);current.fill(Infinity);
+        if(group===1){for(let end=1;end<=n;end++)current[end]=variance(0,end);}
+        else{
+          // Sorted one-dimensional squared-distance costs have monotone optima.
+          function solve(left,right,optLeft,optRight){
+            if(left>right)return;
+            const middle=Math.floor((left+right)/2),last=Math.min(middle-1,optRight);let best=optLeft,bestCost=Infinity;
+            for(let start=optLeft;start<=last;start++){
+              const cost=previous[start]+variance(start,middle);
+              if(cost<bestCost){bestCost=cost;best=start;}
+            }
+            current[middle]=bestCost;partitions[group][middle]=best;
+            solve(left,middle-1,optLeft,best);solve(middle+1,right,best,optRight);
+          }
+          solve(group,n,group-1,n-1);
+        }
+        previous=current;
+      }
+      const breaks=[];let end=n;
+      for(let group=k;group>1;group--){const start=partitions[group][end];breaks.push(unique[start-1]);end=start;}
+      return breaks.reverse();
+    }
+    function classify(values,method='quantile',requested=5){
+      const sorted=values.map(number).filter(value=>value!==null).sort((a,b)=>a-b),k=Math.max(1,Math.floor(requested)||1);
+      if(!sorted.length)return {min:null,max:null,breaks:[],count:0,total:0};
+      const min=sorted[0],max=sorted[sorted.length-1];let breaks=[];
+      if(min!==max){
+        if(method==='jenks')breaks=jenks(sorted,k);
+        else for(let i=1;i<k;i++)breaks.push(method==='equal'?min+(max-min)*i/k:quantile(sorted,i/k));
+      }
+      return {min,max,breaks,count:breaks.length+1,total:sorted.length};
+    }
+    function areaName(value){
+      if(missing(value)||number(value)===0)return '';
+      const name=text(value).trim().replace(/\s+/g,' ').toLocaleLowerCase();
+      return ['n/a','na','none','null','unknown'].includes(name)?'':name;
+    }
+    function sameArea(properties,mapping){
+      const a=areaName(properties[mapping.areaA]),b=areaName(properties[mapping.areaB]);
+      return !!a&&!!b&&a===b;
+    }
+    function profile(features) {
+      const fields = new Map();
+      for (const f of features) for (const [key, value] of Object.entries(f.properties || {})) {
+        if (!fields.has(key)) fields.set(key, {key, nonempty:0, numericCount:0, min:Infinity, max:-Infinity});
+        const info = fields.get(key);
+        if (!missing(value)) {
+          info.nonempty++;
+          const n = number(value);
+          if (n !== null) { info.numericCount++; info.min=Math.min(info.min,n); info.max=Math.max(info.max,n); }
+        }
+      }
+      return [...fields.values()].map(f => ({...f, numeric:!/(?:geoid|fips|(?:^|_)(?:id|fid|oid|objectid|code)(?:$|_))/i.test(f.key) && f.nonempty > 0 && f.numericCount / f.nonempty >= .98}));
+    }
+    function conditionMatch(value, condition, numericField) {
+      const {operator, value:target, max} = condition;
+      const absent = missing(value) || (numericField && number(value) === null);
+      if (operator === 'missing') return absent;
+      if (operator === 'present') return !absent;
+      if (numericField) {
+        const n=number(value), t=number(target), upper=number(max);
+        if (n === null || t === null) return false;
+        if (operator === 'between') return upper !== null && n >= t && n <= upper;
+        if (operator === 'eq') return n === t;
+        if (operator === 'neq') return n !== t;
+        if (operator === 'gt') return n > t;
+        if (operator === 'gte') return n >= t;
+        if (operator === 'lt') return n < t;
+        if (operator === 'lte') return n <= t;
+        return false;
+      }
+      if (absent) return false;
+      const a=text(value).toLocaleLowerCase(), b=text(target).toLocaleLowerCase();
+      if (operator === 'contains') return a.includes(b);
+      if (operator === 'eq') return a === b;
+      if (operator === 'neq') return a !== b;
+      if (operator === 'starts') return a.startsWith(b);
+      return false;
+    }
+    function inRange(value, min, max, excludeMin=false) {
+      if(missing(min) && missing(max)) return true;
+      const n=number(value), low=missing(min)?null:number(min), high=missing(max)?null:number(max);
+      if(n===null || (!missing(min)&&low===null) || (!missing(max)&&high===null)) return false;
+      return (low===null || (excludeMin?n>low:n>=low)) && (high===null || n<=high);
+    }
+    function filter(features, options) {
+      const {mapping, city='', peer='', role='either', conditions=[], fieldTypes={}, mode='all', value='', max='',distanceMin='',distanceMax='',distanceExcludeMin=false,populationMin='',populationMax='',populationScope='either',areaMode='all',areaMinMiles='20'}=options;
+      if(areaMode==='distance-exception'&&(number(areaMinMiles)===null||number(areaMinMiles)<0))return [];
+      const query=city.trim().toLocaleLowerCase(), peerQuery=peer.trim().toLocaleLowerCase();
+      const populationActive=!missing(populationMin)||!missing(populationMax);
+      let result=features.filter(f => {
+        const props=f.properties || {};
+        if (query || peerQuery) {
+          const a=text(props[mapping.a]).toLocaleLowerCase(), b=text(props[mapping.b]).toLocaleLowerCase();
+          if(query && peerQuery){
+            if(!((a.includes(query)&&b.includes(peerQuery))||(b.includes(query)&&a.includes(peerQuery))))return false;
+          }else{
+            const q=query || peerQuery;
+            if (role === 'a' ? !a.includes(q) : role === 'b' ? !b.includes(q) : !(a.includes(q) || b.includes(q))) return false;
+          }
+        }
+        if(!inRange(props[mapping.distance],distanceMin,distanceMax,distanceExcludeMin))return false;
+        if(areaMode!=='all'&&sameArea(props,mapping)){
+          if(areaMode==='exclude')return false;
+          if(areaMode==='distance-exception'&&!inRange(props[mapping.distance],areaMinMiles,''))return false;
+        }
+        if(populationActive){
+          const a=number(props[mapping.populationA]),b=number(props[mapping.populationB]);
+          const matches=v=>inRange(v,populationMin,populationMax);
+          let pass=false;
+          if(populationScope==='either')pass=matches(a)||matches(b);
+          if(populationScope==='both')pass=matches(a)&&matches(b);
+          if(populationScope==='a')pass=matches(a);
+          if(populationScope==='b')pass=matches(b);
+          if(a!==null && b!==null && populationScope==='smaller')pass=matches(Math.min(a,b));
+          if(a!==null && b!==null && populationScope==='larger')pass=matches(Math.max(a,b));
+          if(!pass)return false;
+        }
+        return conditions.every(c => conditionMatch(props[c.field], c, !!fieldTypes[c.field]));
+      });
+      if (mode === 'all' || !mapping.trips) return result;
+      const n=number(value);
+      if (n === null) return [];
+      const valid=result.filter(f => number(f.properties[mapping.trips]) !== null);
+      if (mode === 'range') {
+        const high=number(max);
+        return high === null ? [] : valid.filter(f => number(f.properties[mapping.trips]) >= n && number(f.properties[mapping.trips]) <= high);
+      }
+      if (mode.endsWith('rank')) {
+        if (n < 1 || !Number.isInteger(n)) return [];
+        const sign=mode.startsWith('top') ? -1 : 1;
+        return valid.sort((a,b) => sign*(number(a.properties[mapping.trips])-number(b.properties[mapping.trips])) || a._id-b._id).slice(0,n);
+      }
+      if (n <= 0 || n > 100) return [];
+      const sorted=valid.map(f=>number(f.properties[mapping.trips])).sort((a,b)=>a-b);
+      const top=mode.startsWith('top'), threshold=quantile(sorted,top ? 1-n/100 : n/100);
+      return valid.filter(f=>top ? number(f.properties[mapping.trips]) >= threshold : number(f.properties[mapping.trips]) <= threshold);
+    }
+    function csv(features, fields) {
+      function cell(value) {
+        let s=text(value);
+        if(typeof value!=='number' && /^[\t\r\n ]*[=+@-]/.test(s) && number(s)===null) s="'"+s;
+        return '"'+s.replace(/"/g,'""')+'"';
+      }
+      return '\ufeff'+[fields.map(cell).join(','),...features.map(f=>fields.map(k=>cell(f.properties[k])).join(','))].join('\r\n');
+    }
+    return {number,missing,text,escape,quantile,jenks,classify,areaName,sameArea,profile,inRange,filter,csv};
+  })();
+  
+  </script>
+  <script id="od-geometry">
+
+  'use strict';
+  // Display simplification never changes the encoded source routes used for export.
+  const ODGeometry = (() => {
+    function visit(encoded, precision, callback) {
+      let index=0,lon=0,lat=0,count=0;
+      const scale=10**precision;
+      function signed() {
+        let value=0,multiplier=1,byte;
+        do {
+          if(index>=encoded.length)throw new Error('Incomplete encoded route.');
+          byte=encoded.charCodeAt(index++)-63;
+          if(byte<0||byte>63||multiplier>2**40)throw new Error('Invalid encoded route.');
+          value+=(byte&31)*multiplier;multiplier*=32;
+        }while(byte>=32);
+        return value%2?-(value+1)/2:value/2;
+      }
+      while(index<encoded.length){lon+=signed();lat+=signed();callback(lon/scale,lat/scale,count++);}
+      if(count<2)throw new Error('A route must have at least two vertices.');
+      return count;
+    }
+    function decode(encoded, precision=7) {
+      const points=[];visit(encoded,precision,(lon,lat)=>points.push([lon,lat]));return points;
+    }
+    function geometry(feature,precision=7) {
+      const parts=feature._routes.map(route=>decode(route,precision));
+      return parts.length===1?{type:'LineString',coordinates:parts[0]}:{type:'MultiLineString',coordinates:parts};
+    }
+    function project(lon,lat,zoom) {
+      const size=256*2**zoom,sin=Math.sin(Math.max(-85.0511287798,Math.min(85.0511287798,lat))*Math.PI/180);
+      return [(lon+180)/360*size,(.5-Math.log((1+sin)/(1-sin))/(4*Math.PI))*size];
+    }
+    function segmentDistanceSquared(px,py,ax,ay,bx,by) {
+      let x=ax,y=ay,dx=bx-ax,dy=by-ay;
+      if(dx!==0||dy!==0){const t=((px-ax)*dx+(py-ay)*dy)/(dx*dx+dy*dy);if(t>1){x=bx;y=by;}else if(t>0){x+=dx*t;y+=dy*t;}}
+      dx=px-x;dy=py-y;return dx*dx+dy*dy;
+    }
+    function simplify(points,tolerance=1) {
+      const count=points.length/2;
+      if(count<=2)return Float64Array.from(points);
+      const keep=new Uint8Array(count);keep[0]=keep[count-1]=1;
+      const stack=[0,count-1],squared=tolerance*tolerance;
+      while(stack.length){
+        const last=stack.pop(),first=stack.pop();let furthest=-1,distance=squared;
+        for(let i=first+1;i<last;i++){
+          const d=segmentDistanceSquared(points[i*2],points[i*2+1],points[first*2],points[first*2+1],points[last*2],points[last*2+1]);
+          if(d>distance){distance=d;furthest=i;}
+        }
+        if(furthest>=0){keep[furthest]=1;if(furthest-first>1)stack.push(first,furthest);if(last-furthest>1)stack.push(furthest,last);}
+      }
+      const result=new Float64Array(keep.reduce((total,value)=>total+value,0)*2);let position=0;
+      for(let i=0;i<count;i++)if(keep[i]){result[position++]=points[i*2];result[position++]=points[i*2+1];}
+      return result;
+    }
+    function projected(encoded,precision,zoom,tolerance=1) {
+      const points=[];visit(encoded,precision,(lon,lat)=>{const xy=project(lon,lat,zoom);points.push(xy[0],xy[1]);});
+      return simplify(points,tolerance);
+    }
+    // Liang-Barsky clipping keeps offscreen segments out of the hit-test grid.
+    function clip(ax,ay,bx,by,width,height,padding=8) {
+      const dx=bx-ax,dy=by-ay,p=[-dx,dx,-dy,dy],q=[ax+padding,width+padding-ax,ay+padding,height+padding-ay];
+      let start=0,end=1;
+      for(let i=0;i<4;i++){
+        if(p[i]===0){if(q[i]<0)return null;continue;}
+        const t=q[i]/p[i];
+        if(p[i]<0){if(t>end)return null;start=Math.max(start,t);}else{if(t<start)return null;end=Math.min(end,t);}
+      }
+      return [ax+start*dx,ay+start*dy,ax+end*dx,ay+end*dy];
+    }
+    function gridCells(ax,ay,bx,by,size=64) {
+      let x=Math.floor(ax/size),y=Math.floor(ay/size);
+      const endX=Math.floor(bx/size),endY=Math.floor(by/size),dx=bx-ax,dy=by-ay,stepX=Math.sign(dx),stepY=Math.sign(dy),cells=[];
+      let nextX=stepX?((stepX>0?(x+1)*size:x*size)-ax)/dx:Infinity;
+      let nextY=stepY?((stepY>0?(y+1)*size:y*size)-ay)/dy:Infinity;
+      const deltaX=stepX?size/Math.abs(dx):Infinity,deltaY=stepY?size/Math.abs(dy):Infinity;
+      for(let steps=0;steps<10000;steps++){
+        cells.push(x+':'+y);if(x===endX&&y===endY)break;
+        if(nextX<nextY){x+=stepX;nextX+=deltaX;}else{y+=stepY;nextY+=deltaY;}
+      }
+      return cells;
+    }
+    return {visit,decode,geometry,project,segmentDistanceSquared,simplify,projected,clip,gridCells};
+  })();
+    </script>
+  <script id="od-worker" type="text/plain">
+
+'use strict';
+self.onmessage=async event=>{
+  try{
+    let data;
+    if(event.data.format==='packed'){
+      if(typeof DecompressionStream==='undefined')throw new Error('This tool needs a current version of Chrome, Edge, Firefox, or Safari to open its embedded dataset.');
+      let bytes;
+      if(event.data.bytes)bytes=new Uint8Array(event.data.bytes);
+      else{const binary=atob(event.data.base64);bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);}
+      const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+      data=JSON.parse(await new Response(stream).text());
+      if(data.format!=='texas-od-packed-v1'||!Array.isArray(data.fields)||!Array.isArray(data.rows)||data.rows.length!==data.routes?.length||data.rows.length!==data.bounds?.length||data.rows.length!==data.endpoints?.length)throw new Error('The embedded dataset is invalid.');
+    }else{
+      const source=JSON.parse(new TextDecoder().decode(event.data.bytes));
+      if(source.type!=='FeatureCollection'||!Array.isArray(source.features)||!source.features.length)throw new Error('The configured GeoJSON must contain a nonempty FeatureCollection.');
+      if(source.crs)throw new Error('Export the configured GeoJSON to WGS 84 longitude/latitude without a legacy CRS member.');
+      const fieldSet=new Set();for(const feature of source.features)for(const field of Object.keys(feature.properties||{}))fieldSet.add(field);const fields=[...fieldSet];
+      data={format:'texas-od-packed-v1',precision:7,fields,rows:[],routes:[],bounds:[],endpoints:[]};
+      function signed(value){let number=value<0?-2*value-1:2*value,result='';while(number>=32){result+=String.fromCharCode((number%32)+95);number=Math.floor(number/32);}return result+String.fromCharCode(number+63);}
+      for(const feature of source.features){
+        if(feature.type!=='Feature'||!feature.properties||typeof feature.properties!=='object'||Array.isArray(feature.properties))throw new Error('A configured feature has invalid attributes.');
+        const geometry=feature.geometry,parts=geometry?.type==='LineString'?[geometry.coordinates]:geometry?.type==='MultiLineString'?geometry.coordinates:null;
+        if(!parts?.length)throw new Error('Every configured OD feature must be a LineString or MultiLineString.');
+        const encoded=[],bounds=[Infinity,Infinity,-Infinity,-Infinity];
+        for(const part of parts){
+          if(!Array.isArray(part)||part.length<2)throw new Error('A configured route has too few vertices.');
+          let lon=0,lat=0,route='';
+          for(const point of part){
+            if(!Array.isArray(point)||point.length!==2||!Number.isFinite(point[0])||!Number.isFinite(point[1])||Math.abs(point[0])>180||Math.abs(point[1])>90)throw new Error('Use two-dimensional WGS 84 longitude/latitude route coordinates.');
+            const x=Math.round(point[0]*1e7),y=Math.round(point[1]*1e7);route+=signed(x-lon)+signed(y-lat);lon=x;lat=y;
+            bounds[0]=Math.min(bounds[0],point[0]);bounds[1]=Math.min(bounds[1],point[1]);bounds[2]=Math.max(bounds[2],point[0]);bounds[3]=Math.max(bounds[3],point[1]);
+          }
+          encoded.push(route);
+        }
+        const first=parts[0][0],last=parts[parts.length-1].at(-1);
+        data.rows.push(fields.map(field=>feature.properties[field]??null));data.routes.push(encoded);data.bounds.push(bounds);data.endpoints.push([...first,...last]);
+      }
+    }
+    self.postMessage({ok:true,data});
+  }catch(error){self.postMessage({ok:false,error:error.message||'The dataset could not be opened.'});}
+};
+    </script>
+  
+  <script id="od-app">
+
+  'use strict';
+  // Registered datasets load automatically; no upload controls are used.
+  const CONFIG={
+    center:[31.1,-99.3],zoom:6,
+    defaultMapping:{a:'city_a',b:'city_b',trips:'actual_bidirectional_trips',distance:'road_miles',populationA:'a_population_2024',populationB:'b_population_2024',areaA:'a_urbanarea',areaB:'b_urbanarea'},
+    datasets:[
+      {id:'texas_roadway',label:'On-roadway pairs · 500+ weekday trips',shortLabel:'On-roadway pairs',source:'Onsystem_pairs_cities_filtered.geojson',dataParts:['./texas-roadway-01.bin'],featureCount:4797,minWeekdayTrips:500,mapping:{trips:'bidirectional_trips_1',distance:'road_miles_1'},note:'This source includes only pairs with at least 500 weekday trips.'},
+      {id:'texas_od',label:'Original city pairs',source:'OD_bidirection_FeaturesToJSO.geojson',dataParts:['./texas-od-01.bin','./texas-od-02.bin'],featureCount:55088,note:'Original dataset with all 55,088 supplied city pairs.',fields:['OID','a_id','b_id','a_census_geoid','b_census_geoid','city_a','city_b','a_urbanarea','b_urbanarea','a_lat','a_lon','b_lat','b_lon','a_population_2024','b_population_2024','actual_bidirectional_trips','road_miles','directions_present','unique_id','ORIG_FID','Shape_Length']}
+    ]
+  };
+  const FIELD_LABELS={
+    a_id:'City A ID',b_id:'City B ID',a_census_geoid:'City A Census GEOID',b_census_geoid:'City B Census GEOID',
+    city_a:'City A',city_b:'City B',a_urbanarea:'City A urban area',b_urbanarea:'City B urban area',
+    a_lat:'City A latitude',a_lon:'City A longitude',b_lat:'City B latitude',b_lon:'City B longitude',
+    a_population_2024:'City A population (2024)',b_population_2024:'City B population (2024)',
+    weekday_trips:'Weekday trips',road_miles:'Road miles',road_miles_1:'Road miles',directions_present:'Directions present',unique_id:'City-pair ID',OID:'Record ID',OBJECTID:'Record ID',ORIG_FID:'Source feature ID',Shape_Length:'Source shape length',geom_Length:'Source geometry length'
+  };
+  (() => {
+    const byId=id=>document.getElementById(id), esc=ODCore.escape, num=ODCore.number;
+    const labelFor=key=>FIELD_LABELS[key] || key;
+    const state={features:[],filtered:[],fields:[],types:Object.create(null),mapping:{a:'',b:'',trips:'',distance:'',populationA:'',populationB:'',areaA:'',areaB:''},conditions:[],colorField:'',breaks:[],palette:[],colorMin:0,colorMax:0,page:0,pageSize:25,sort:'trips',sortDirection:-1,selected:null,source:'',datasetId:'',precision:7,loading:false,exporting:false,layer:null,points:null,selection:null,citiesFor:null,cityLabels:false,citiesShown:false};
+    const format=value=>value==null?'—':new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(value);
+    const short=value=>value==null?'—':new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:1}).format(value);
+    const display=value=>ODCore.missing(value)?'—':ODCore.text(value);
+    let map,base,tileFailures=0,timer,noticeTimer;
+    function notify(message,persistent=false){
+      clearTimeout(noticeTimer);
+      byId('notice').hidden=!message;byId('notice').querySelector('span').textContent=message;
+      if(message&&!persistent)noticeTimer=setTimeout(()=>{byId('notice').hidden=true;},8000);
+    }
+    function busy(active,message){
+      document.body.classList.toggle('busy',active);
+      byId('dataset-switch').disabled=active||state.exporting||CONFIG.datasets.length<2;
+      if(message)byId('status-line').textContent=message;
+    }
+    const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
+    const options=(fields,selected,emptyLabel,showRaw=false)=>'<option value="">'+esc(emptyLabel)+'</option>'+fields.map(f=>'<option value="'+esc(f.key)+'"'+(f.key===selected?' selected':'')+'>'+esc(labelFor(f.key)+(showRaw&&labelFor(f.key)!==f.key?' ('+f.key+')':''))+'</option>').join('');
+    function setBasemap(){
+      if(!map)return;if(base)map.removeLayer(base);tileFailures=0;
+      const choice=byId('basemap').value;
+      if(choice==='none'){base=null;return;}
+      base=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+        maxZoom:19,className:choice==='dark'?'od-dark-basemap':'',
+        attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+      }).addTo(map);
+      base.on('tileerror',()=>{if(++tileFailures===4)notify('Basemap tiles are unavailable. Your OD filters and table remain available.',true);});
+      base.on('tileload',()=>{tileFailures=0;});
+    }
+    if(window.L){
+      map=L.map('map',{preferCanvas:true,zoomControl:true,attributionControl:true}).setView(CONFIG.center,CONFIG.zoom);
+      map.createPane('flowPane');map.getPane('flowPane').style.zIndex=410;
+      map.createPane('endpointPane');map.getPane('endpointPane').style.zIndex=420;
+      map.createPane('selectionPane');map.getPane('selectionPane').style.zIndex=430;
+      map.getPane('selectionPane').style.pointerEvents='none';
+      setBasemap();L.control.scale({position:'bottomright',imperial:true,metric:false}).addTo(map);
+    }else notify('The map library could not load. Connect to the internet and reopen this HTML file.',true);
+    function togglePanel(which){
+      const hidden=byId('workspace').classList.toggle(which+'-hidden');
+      byId(which==='left'?'toggle-layers':'toggle-analysis').setAttribute('aria-expanded',String(!hidden));
+      if(map)setTimeout(()=>map.invalidateSize(),40);
+    }
+    function setResponsivePanels(){
+      if(window.innerWidth<=950)byId('workspace').classList.add('left-hidden');
+      if(window.innerWidth<=650)byId('workspace').classList.add('right-hidden');
+      byId('toggle-layers').setAttribute('aria-expanded',String(!byId('workspace').classList.contains('left-hidden')));
+      byId('toggle-analysis').setAttribute('aria-expanded',String(!byId('workspace').classList.contains('right-hidden')));
+    }
+    setResponsivePanels();
+    byId('toggle-layers').onclick=()=>togglePanel('left');byId('close-layers').onclick=()=>togglePanel('left');byId('toggle-analysis').onclick=()=>togglePanel('right');
+    byId('basemap').onchange=setBasemap;
+    document.querySelectorAll('[data-close]').forEach(btn=>btn.onclick=()=>byId(btn.dataset.close).close());
+    byId('help').onclick=()=>byId('help-dialog').showModal();
+    async function fetchDataPart(part){
+      const alternative=part.startsWith('./data/')?part.replace('./data/','./'):part.startsWith('./')&&!part.slice(2).includes('/')?'./data/'+part.slice(2):part;
+      const candidates=[...new Set([part,alternative])];
+      let status='request failed';
+      for(const path of candidates){
+        try{
+          const response=await fetch(path);
+          if(!response.ok){status=String(response.status);continue;}
+          if((response.headers.get('content-type')||'').includes('text/html')){status='HTML page returned';continue;}
+          return await response.arrayBuffer();
+        }catch(error){status=error.message||'request failed';}
+      }
+      throw new Error('Could not find '+part.split('/').pop()+' ('+status+'). Upload this data file beside index.html, or in its data folder.');
+    }
+    async function readConfiguredDataset(dataset){
+      if(dataset.dataParts&&window.location.protocol==='file:')throw new Error('Open this version through GitHub Pages or a local web server so its data files can load. Keep the data files beside index.html or in its data folder.');
+      const code=byId('od-worker').textContent,url=URL.createObjectURL(new Blob([code],{type:'text/javascript'})),worker=new Worker(url);
+      try{
+        const message=dataset.dataParts?await(async()=>{
+          const buffers=await Promise.all(dataset.dataParts.map(fetchDataPart));
+          const bytes=new Uint8Array(buffers.reduce((sum,buffer)=>sum+buffer.byteLength,0));let offset=0;
+          for(const buffer of buffers){bytes.set(new Uint8Array(buffer),offset);offset+=buffer.byteLength;}
+          return {format:'packed',bytes:bytes.buffer};
+        })():dataset.embedded?{format:'packed',base64:byId(dataset.embedded).textContent.trim()}:await(async()=>{
+          const response=await fetch(dataset.url);if(!response.ok)throw new Error('Dataset request failed ('+response.status+').');
+          return {format:'geojson',bytes:await response.arrayBuffer()};
+        })();
+        return await new Promise((resolve,reject)=>{
+          worker.onmessage=event=>event.data.ok?resolve(event.data.data):reject(new Error(event.data.error));
+          worker.onerror=()=>reject(new Error('The dataset could not be opened. Reopen the page in a current browser.'));
+          worker.postMessage(message,message.bytes?[message.bytes]:[]);
+        });
+      }finally{worker.terminate();URL.revokeObjectURL(url);}
+    }
+    async function loadDataset(id){
+      const dataset=CONFIG.datasets.find(item=>item.id===id);if(!dataset||state.loading)return;
+      clearTimeout(timer);state.loading=true;busy(true,'Opening '+dataset.label+'…');notify('');
+      byId('welcome').hidden=false;byId('loading-title').textContent='Opening '+dataset.label;byId('loading-note').textContent='Loading the city-pair dataset. Your filters will be ready shortly.';byId('retry-dataset').hidden=true;
+      try{
+        const packed=await readConfiguredDataset(dataset);
+        if(!packed.rows.length||!Number.isInteger(packed.precision)||packed.precision<0||packed.precision>8)throw new Error('The configured route dataset is empty or invalid.');
+        const sourceMapping={...CONFIG.defaultMapping,...dataset.mapping};
+        const retainedFields=packed.fields.map((field,index)=>({field,index,key:field===sourceMapping.trips?'weekday_trips':field})).filter(item=>!dataset.fields||dataset.fields.includes(item.field));
+        const features=[];
+        for(let start=0;start<packed.rows.length;start+=1500){
+          const end=Math.min(start+1500,packed.rows.length);
+          for(let i=start;i<end;i++){
+            const row=packed.rows[i],bounds=packed.bounds[i],routes=packed.routes[i],endpoints=packed.endpoints[i];
+            if(!Array.isArray(row)||row.length!==packed.fields.length||!Array.isArray(bounds)||bounds.length!==4||!bounds.every(Number.isFinite)||!Array.isArray(routes)||!routes.length||routes.some(route=>typeof route!=='string'||!route)||!Array.isArray(endpoints)||endpoints.length!==4)throw new Error('A configured OD record is invalid.');
+            const properties=Object.fromEntries(retainedFields.map(({key,index})=>[key,row[index]]));
+            features.push({_id:i,properties,_routes:routes,_bounds:bounds,_endpoints:endpoints});
+          }
+          byId('loading-note').textContent='Preparing '+format(end)+' of '+format(packed.rows.length)+' city pairs…';await tick();
+        }
+        const fields=ODCore.profile(features),mapping={...sourceMapping,trips:sourceMapping.trips?'weekday_trips':''};
+        for(const role of ['areaA','areaB'])if(mapping[role]&&!fields.some(field=>field.key===mapping[role]))mapping[role]='';
+        for(const [role,field] of Object.entries(mapping))if(field&&!fields.some(item=>item.key===field))throw new Error('The configured '+role+' field is missing: '+field);
+        if(dataset.featureCount&&features.length!==dataset.featureCount)throw new Error('The embedded city-pair count does not match its configuration.');
+        if(dataset.minWeekdayTrips&&features.some(feature=>num(feature.properties.weekday_trips)===null||num(feature.properties.weekday_trips)<dataset.minWeekdayTrips))throw new Error('The dataset contains a weekday trip count below its stated source minimum.');
+        if(state.layer)state.layer.resetDataset();if(byId('detail-dialog').open)byId('detail-dialog').close();
+        const keepSingleColor=!!state.datasetId&&!state.colorField;
+        state.features=features;state.fields=fields;state.types=Object.fromEntries(fields.map(field=>[field.key,field.numeric]));
+        state.mapping=mapping;state.precision=packed.precision;state.datasetId=dataset.id;state.source=dataset.source||dataset.label;
+        state.colorField=keepSingleColor?'':mapping.trips;state.page=0;state.sort='trips';state.sortDirection=-1;state.selected=null;resetFilterInputs();
+        for(const control of ['fit-map','add-condition','reset-filters','color-field','city-search','city-peer','city-role'])byId(control).disabled=false;
+        byId('primary-label').textContent=dataset.shortLabel||dataset.label;byId('dataset-label').textContent=dataset.shortLabel||dataset.label;byId('dataset-switch').value=dataset.id;
+        byId('dataset-note').textContent=dataset.note||'';
+        byId('layer-note').textContent=format(features.length)+' city pairs · '+format(fields.length)+' attributes';
+        byId('dataset-count').textContent=CONFIG.datasets.length===1?'1 available dataset':format(CONFIG.datasets.length)+' available datasets';
+        byId('welcome').hidden=true;updateMappingControls();applyFilters();fitMap();
+      }catch(error){
+        if(state.datasetId){byId('dataset-switch').value=state.datasetId;byId('welcome').hidden=true;notify(error.message,true);}
+        else{byId('loading-title').textContent='The dataset could not open';byId('loading-note').textContent=error.message;byId('retry-dataset').hidden=false;}
+        byId('status-line').textContent='Dataset could not load. '+error.message;
+      }finally{state.loading=false;busy(false);if(state.features.length)updateStatus();}
+    }
+    byId('dataset-switch').innerHTML=CONFIG.datasets.map(dataset=>'<option value="'+esc(dataset.id)+'">'+esc(dataset.label)+'</option>').join('');
+    byId('dataset-switch').onchange=()=>loadDataset(byId('dataset-switch').value);
+    byId('retry-dataset').onclick=()=>loadDataset(byId('dataset-switch').value||CONFIG.datasets[0].id);
+    function updateMappingControls(){
+      byId('color-field').innerHTML=options(state.fields.filter(f=>f.numeric),state.colorField,'Single color · route overlap');
+      byId('trip-mode').disabled=!state.mapping.trips;
+      const dataset=CONFIG.datasets.find(item=>item.id===state.datasetId);
+      byId('trip-help').textContent=state.mapping.trips?(dataset?.minWeekdayTrips?'Source minimum: '+format(dataset.minWeekdayTrips)+' weekday trips per pair. ':'')+'Ranking follows the other filters. Percentile ties are included.':'No weekday trip field is configured for this dataset.';
+      for(const id of ['distance-min','distance-max','distance-exclusive','distance-preset'])byId(id).disabled=!state.mapping.distance;
+      for(const id of ['population-scope','population-min','population-max','table-population'])byId(id).disabled=!(state.mapping.populationA||state.mapping.populationB);
+      if(!state.mapping.distance){byId('distance-min').value='';byId('distance-max').value='';byId('distance-exclusive').checked=false;}
+      if(!(state.mapping.populationA||state.mapping.populationB)){byId('population-min').value='';byId('population-max').value='';}
+      renderAreaControls();
+      byId('distance-heading').hidden=!state.mapping.distance;
+      byId('population-a-heading').hidden=!byId('table-population').checked||!state.mapping.populationA;
+      byId('population-b-heading').hidden=!byId('table-population').checked||!state.mapping.populationB;
+      const cityNames=new Set();
+      for(const f of state.features)for(const field of [state.mapping.a,state.mapping.b])if(field && !ODCore.missing(f.properties[field]))cityNames.add(ODCore.text(f.properties[field]));
+      byId('city-options').innerHTML=[...cityNames].sort().slice(0,3000).map(name=>'<option value="'+esc(name)+'"></option>').join('');
+    }
+    function resetFilterInputs(){
+      byId('city-search').value='';byId('city-peer').value='';byId('city-role').value='either';byId('trip-mode').value='all';
+      for(const id of ['distance-min','distance-max','population-min','population-max'])byId(id).value='';
+      byId('area-mode').value='all';byId('area-min-miles').value='20';renderAreaControls();
+      byId('distance-exclusive').checked=false;byId('population-scope').value='either';state.conditions=[];byId('conditions').replaceChildren();renderTripControls();
+    }
+    byId('reset-filters').onclick=()=>{resetFilterInputs();state.page=0;applyFilters();};
+    function renderTripControls(preserve=false){
+      const previousValue=byId('trip-value')?.value,previousMax=byId('trip-max')?.value;
+      const mode=byId('trip-mode').value, container=byId('trip-controls');container.style.display=mode==='all'?'none':'block';
+      if(mode==='all'){container.replaceChildren();return;}
+      if(mode==='range'){container.innerHTML='<div class="two-columns"><label class="field"><span>Minimum weekday trips</span><input id="trip-value" type="number" min="0" step="any" value="'+esc(CONFIG.datasets.find(item=>item.id===state.datasetId)?.minWeekdayTrips||0)+'"></label><label class="field"><span>Maximum weekday trips</span><input id="trip-max" type="number" min="0" step="any" value="'+esc(state.fields.find(f=>f.key===state.mapping.trips)?.max || 0)+'"></label></div>';}
+      else{const percent=mode.endsWith('percent');container.innerHTML='<label class="field"><span>'+esc(percent?(mode.startsWith('top')?'Top share (%)':'Bottom share (%)'):'Number of pairs')+'</span><input id="trip-value" type="number" min="'+(percent?'.01':'1')+'" '+(percent?'max="100"':'')+' step="'+(percent?'any':'1')+'" value="'+(percent?'10':'25')+'"></label>';}
+      if(preserve&&previousValue!==undefined)byId('trip-value').value=previousValue;
+      if(preserve&&previousMax!==undefined&&byId('trip-max'))byId('trip-max').value=previousMax;
+      container.querySelectorAll('input').forEach(input=>input.oninput=scheduleFilters);
+    }
+    function scheduleFilters(){clearTimeout(timer);timer=setTimeout(()=>{state.page=0;applyFilters();},140);}
+    byId('trip-mode').onchange=()=>{renderTripControls();scheduleFilters();};
+    byId('city-search').oninput=scheduleFilters;byId('city-peer').oninput=scheduleFilters;byId('city-role').onchange=scheduleFilters;
+    for(const id of ['distance-min','distance-max','population-min','population-max'])byId(id).oninput=scheduleFilters;
+    byId('population-scope').onchange=scheduleFilters;byId('distance-exclusive').onchange=scheduleFilters;
+    byId('distance-preset').onclick=()=>{byId('distance-min').value='50';byId('distance-max').value='';byId('distance-exclusive').checked=true;state.page=0;applyFilters();};
+    byId('table-population').onchange=()=>{updateMappingControls();renderTable();};
+    function renderAreaControls(){
+      const available=!!(state.mapping.areaA&&state.mapping.areaB),exception=byId('area-mode').value==='distance-exception';
+      byId('area-mode').disabled=!available;
+      byId('area-distance-control').hidden=!exception;
+      byId('area-min-miles').disabled=!available||!exception||!state.mapping.distance;
+      byId('area-help').textContent=available?'Uses the supplied urban-area labels. Unassigned areas (0) remain included.':'No urban-area fields are available for this dataset.';
+    }
+    byId('area-mode').onchange=()=>{renderAreaControls();scheduleFilters();};
+    byId('area-min-miles').oninput=scheduleFilters;
+    const numericOperators=[['between','Between'],['gte','At least'],['lte','At most'],['eq','Equals'],['neq','Does not equal'],['gt','Greater than'],['lt','Less than'],['missing','Is missing'],['present','Has a value']];
+    const textOperators=[['contains','Contains'],['eq','Equals'],['neq','Does not equal'],['starts','Starts with'],['missing','Is missing'],['present','Has a value']];
+    function conditionElement(condition){
+      const row=document.createElement('div');row.className='condition';
+      const numeric=state.types[condition.field],operators=numeric?numericOperators:textOperators;
+      row.innerHTML='<div class="condition-head"><select aria-label="Attribute field">'+state.fields.map(f=>'<option value="'+esc(f.key)+'"'+(f.key===condition.field?' selected':'')+' title="'+esc(f.key)+'">'+esc(labelFor(f.key))+'</option>').join('')+'</select><button aria-label="Remove condition">×</button></div><select class="operator" aria-label="Condition operator">'+operators.map(([value,label])=>'<option value="'+value+'"'+(value===condition.operator?' selected':'')+'>'+label+'</option>').join('')+'</select><div class="condition-value"></div>';
+      const field=row.querySelector('.condition-head select'),operator=row.querySelector('.operator'),values=row.querySelector('.condition-value');
+      function renderValue(){
+        condition.operator=operator.value;values.replaceChildren();values.classList.toggle('range',condition.operator==='between');
+        if(['missing','present'].includes(condition.operator))return;
+        for(const key of condition.operator==='between'?['value','max']:['value']){
+          const input=document.createElement('input');input.type=numeric?'number':'text';if(numeric)input.step='any';
+          input.placeholder=key==='max'?'Maximum':condition.operator==='between'?'Minimum':'Value';input.setAttribute('aria-label',input.placeholder);input.value=condition[key] || '';
+          input.oninput=()=>{condition[key]=input.value;scheduleFilters();};values.append(input);
+        }
+      }
+      renderValue();operator.onchange=()=>{renderValue();scheduleFilters();};
+      field.onchange=()=>{condition.field=field.value;condition.operator=state.types[field.value]?'between':'contains';condition.value='';condition.max='';row.replaceWith(conditionElement(condition));scheduleFilters();};
+      row.querySelector('button').onclick=()=>{state.conditions=state.conditions.filter(c=>c!==condition);row.remove();scheduleFilters();};
+      return row;
+    }
+    byId('add-condition').onclick=()=>{
+      if(!state.fields.length)return;
+      const field=state.fields[0].key,condition={field,operator:state.types[field]?'between':'contains',value:'',max:''};
+      state.conditions.push(condition);byId('conditions').append(conditionElement(condition));scheduleFilters();
+    };
+    function currentOptions(){
+      return {mapping:state.mapping,city:byId('city-search').value,peer:byId('city-peer').value,role:byId('city-role').value,conditions:state.conditions,fieldTypes:state.types,mode:byId('trip-mode').value,value:byId('trip-value')?.value || '',max:byId('trip-max')?.value || '',distanceMin:byId('distance-min').value,distanceMax:byId('distance-max').value,distanceExcludeMin:byId('distance-exclusive').checked,populationMin:byId('population-min').value,populationMax:byId('population-max').value,populationScope:byId('population-scope').value,areaMode:byId('area-mode').value,areaMinMiles:byId('area-min-miles').value};
+    }
+    function validateOptions(options){
+      for(const [name,min,max] of [['Road distance',options.distanceMin,options.distanceMax],['Population',options.populationMin,options.populationMax]]){
+        const low=ODCore.missing(min)?null:num(min),high=ODCore.missing(max)?null:num(max);
+        if((!ODCore.missing(min)&&(low===null||low<0))||(!ODCore.missing(max)&&(high===null||high<0)))return name+' bounds must be non-negative numbers.';
+        if(low!==null&&high!==null&&high<low)return name+' maximum must be at least its minimum.';
+        if(name==='Population'&&((low!==null&&!Number.isInteger(low))||(high!==null&&!Number.isInteger(high))))return 'Population bounds must be whole numbers.';
+      }
+      if(options.areaMode==='distance-exception'&&(!state.mapping.distance||num(options.areaMinMiles)===null||num(options.areaMinMiles)<0))return 'Enter a non-negative road-mile minimum for the same-area exception.';
+      for(const c of options.conditions){
+        if(['missing','present'].includes(c.operator))continue;
+        if(state.types[c.field]){
+          const low=num(c.value), high=num(c.max);
+          if(low===null || (c.operator==='between' && high===null))return 'Enter a numeric value for '+c.field+'.';
+          if(c.operator==='between' && high<low)return 'Maximum must be at least the minimum for '+c.field+'.';
+        }else if(ODCore.missing(c.value))return 'Enter a value for '+c.field+'.';
+      }
+      if(options.mode==='all')return '';
+      const value=num(options.value), high=num(options.max);
+      if(options.mode.endsWith('percent') && (value===null || value<=0 || value>100))return 'Enter a percentage greater than 0 and no more than 100.';
+      if(options.mode.endsWith('rank') && (value===null || value<1 || !Number.isInteger(value)))return 'Enter a whole number of pairs, at least 1.';
+      if(options.mode==='range' && (value===null || high===null || high<value))return 'Enter a valid weekday trip range, with maximum at least minimum.';
+      return '';
+    }
+    function endpointName(feature,role){const key=state.mapping[role],value=key&&feature.properties[key];return ODCore.missing(value)?(role==='a'?'City A':'City B')+' · '+(feature._id+1):ODCore.text(value);}
+    function sortedFeatures(){
+      const numeric=['trips','distance','populationA','populationB'].includes(state.sort),field=numeric?state.mapping[state.sort]:'';
+      return [...state.filtered].sort((a,b)=>{
+        const x=numeric?num(a.properties[field]):endpointName(a,state.sort),y=numeric?num(b.properties[field]):endpointName(b,state.sort);
+        if(x===null&&y!==null)return 1;if(y===null&&x!==null)return -1;
+        const difference=numeric?(x??0)-(y??0):x.localeCompare(y);
+        return difference*state.sortDirection || a._id-b._id;
+      });
+    }
+    function applyFilters(){
+      const options=currentOptions(),error=validateOptions(options);byId('filter-error').textContent=error;
+      state.filtered=error?[]:ODCore.filter(state.features,options);
+      if(!state.filtered.some(f=>f._id===state.selected))state.selected=null;
+      const active=state.conditions.length+Number(!!options.city.trim())+Number(!!options.peer.trim())+Number(options.mode!=='all')+Number(!!options.distanceMin||!!options.distanceMax)+Number(!!options.populationMin||!!options.populationMax)+Number(options.areaMode!=='all');
+      byId('city-role').disabled=!state.features.length||!!(options.city.trim()&&options.peer.trim());
+      byId('city-help').textContent=options.city.trim()&&options.peer.trim()?'Matching this city pair in either endpoint order.':'Fill both city boxes to find a pair in either endpoint order.';
+      byId('condition-badge').textContent=active?active+' active'+(active===1?' filter':' filters'):'No filters';
+      byId('pair-metric').textContent=format(state.filtered.length);
+      const valid=state.mapping.trips?state.filtered.map(f=>num(f.properties[state.mapping.trips])).filter(v=>v!==null):[];
+      const total=valid.reduce((sum,n)=>sum+n,0);
+      byId('trip-metric').textContent=state.mapping.trips?(valid.length || !state.filtered.length?short(total):'—'):'—';
+      byId('trip-metric').title=state.mapping.trips?format(total)+' total weekday trips; '+format(state.filtered.length-valid.length)+' missing weekday trip values':'No weekday trip field assigned';
+      byId('dataset-subtitle').textContent=format(state.features.length)+' loaded pairs';
+      byId('dataset-subtitle').title=state.mapping.trips?labelFor(state.mapping.trips):'No weekday trip field assigned';
+      byId('table-summary').textContent=state.features.length?format(state.filtered.length)+' of '+format(state.features.length)+' pairs'+(state.mapping.trips&&valid.length<state.filtered.length?' · '+format(state.filtered.length-valid.length)+' missing weekday trip counts':''):'Waiting for data';
+      byId('export-csv').disabled=state.exporting||!state.filtered.length;byId('export-geojson').disabled=state.exporting||!state.filtered.length;
+      updateLegend();renderMap();renderTable();updateStatus();
+    }
+    function updateStatus(){
+      byId('status-line').textContent=state.features.length?state.source+' · '+format(state.filtered.length)+' filtered pairs · '+(flowsVisible()?'Routes shown':'Routes hidden')+' · Counts as supplied':'Texas · Opening city-pair flows…';
+    }
+    function interpolateColor(t){
+      const stops=['#77316f','#b13e70','#e56655','#ffa143','#ffda40'];
+      const position=Math.max(0,Math.min(1,t))*4,i=Math.min(3,Math.floor(position)),amount=position-i;
+      const rgb=color=>[1,3,5].map(start=>parseInt(color.slice(start,start+2),16)),a=rgb(stops[i]),b=rgb(stops[i+1]);
+      return '#'+a.map((value,index)=>Math.round(value+(b[index]-value)*amount).toString(16).padStart(2,'0')).join('');
+    }
+    function singleLineColor(){return /^#[0-9a-f]{6}$/i.test(byId('line-color').value)?byId('line-color').value:'#58b7ff';}
+    function updateAppearanceControls(){
+      const single=!state.colorField;
+      byId('single-color-controls').hidden=!single;
+      byId('classification-controls').hidden=single;
+      for(const id of ['classification','classes','scale-width'])byId(id).disabled=single||!state.features.length;
+    }
+    function updateLegend(){
+      updateAppearanceControls();
+      const method=byId('classification').value,field=state.colorField,k=Number(byId('classes').value);
+      const values=field?state.filtered.map(feature=>num(feature.properties[field])):[];
+      const result=ODCore.classify(values,method,k);
+      state.colorMin=result.min??0;state.colorMax=result.max??0;state.breaks=result.breaks;
+      state.palette=result.count?Array.from({length:result.count},(_,i)=>interpolateColor(result.count===1?.5:i/(result.count-1))):[singleLineColor()];
+      const methodName={quantile:'quantiles',equal:'equal intervals',jenks:'natural breaks (Jenks)'}[method]||'quantiles';
+      let subtitle='Opening the color scale…';
+      if(state.features.length){
+        if(!state.filtered.length)subtitle='No pairs match the filters';
+        else if(!field)subtitle='Brightness shows overlapping pairs';
+        else if(!result.total)subtitle='No numeric values · gray = missing';
+        else subtitle='Filtered pairs · '+(result.min===result.max?'one value':methodName)+(result.total<state.filtered.length?' · gray = missing':'');
+      }
+      byId('legend-title').textContent=field?labelFor(field):'Single-color routes';byId('legend-subtitle').textContent=subtitle;
+      byId('legend-bar').innerHTML=(result.total?state.palette:[field?'#89919f':singleLineColor()]).map(color=>'<span style="background:'+color+'"></span>').join('');
+      const limits=result.total?(result.min===result.max?[result.min]:[result.min,...state.breaks,result.max]):[];
+      byId('legend-labels').innerHTML=limits.map(value=>'<span title="'+esc(format(value))+'">'+esc(short(value))+'</span>').join('');
+      byId('legend-labels').classList.toggle('single-value',limits.length===1);
+    }
+    function flowsVisible(){return byId('show-flows').checked&&Number(byId('opacity').value)>0;}
+    function featureStyle(feature){
+      const value=state.colorField?num(feature.properties[state.colorField]):null;
+      let color=singleLineColor();if(state.colorField){color=value===null?'#89919f':state.palette[state.breaks.filter(b=>value>b).length] || state.palette[0];}
+      const relative=value===null||state.colorMax===state.colorMin?0:Math.max(0,Math.min(1,(value-state.colorMin)/(state.colorMax-state.colorMin)));
+      return {pane:'flowPane',color,weight:Number(byId('width').value)*(state.colorField&&byId('scale-width').checked?(.65+1.8*Math.sqrt(relative)):1),opacity:Number(byId('opacity').value)/100,lineCap:'round',lineJoin:'round'};
+    }
+    function createFlowLayer(){
+      const FlowCanvas=L.Layer.extend({
+        initialize(){this._features=[];this._lookup=new Map();this._cache=new Map();this._cacheBytes=0;this._cacheZoom=null;this._generation=0;this._grid=new Map();this._drawn=new Map();},
+        onAdd(map){
+          this._map=map;this._canvas=L.DomUtil.create('canvas','leaflet-layer leaflet-zoom-hide od-flow-canvas');
+          this._canvas.style.pointerEvents='none';this._canvas.setAttribute('aria-hidden','true');map.getPane('flowPane').appendChild(this._canvas);
+          this._context=this._canvas.getContext('2d');
+          map.on('mousemove',this._hover,this);map.on('mouseout',this._clearTooltip,this);map.on('click',this._click,this);this.redraw();
+        },
+        onRemove(map){
+          cancelAnimationFrame(this._frame);cancelAnimationFrame(this._hoverFrame);this._generation++;this._clearTooltip();
+          map.off('mousemove',this._hover,this);map.off('mouseout',this._clearTooltip,this);map.off('click',this._click,this);this._canvas.remove();this._map=null;
+        },
+        getEvents(){return {moveend:this.redraw,resize:this.redraw,movestart:this._startMotion,zoomstart:this._startMotion};},
+        resetDataset(){this._cache.clear();this._cacheBytes=0;this._cacheZoom=null;},
+        setFeatures(features){
+          const field=state.colorField;
+          this._features=flowsVisible()?[...features].sort((a,b)=>(num(a.properties[field])??-Infinity)-(num(b.properties[field])??-Infinity)||a._id-b._id):[];
+          this._lookup=new Map(this._features.map(feature=>[feature._id,feature]));this.redraw();
+        },
+        _startMotion(event){
+          this._moving=true;this._generation++;cancelAnimationFrame(this._frame);this._clearTooltip();
+          if(event.type==='zoomstart')this._canvas.style.visibility='hidden';
+        },
+        _projected(feature,zoom){
+          if(this._cache.has(feature._id)){const item=this._cache.get(feature._id);this._cache.delete(feature._id);this._cache.set(feature._id,item);return item.parts;}
+          const parts=feature._routes.map(route=>ODGeometry.projected(route,state.precision,zoom,1));
+          const bytes=parts.reduce((sum,part)=>sum+part.byteLength,0);
+          while(this._cacheBytes+bytes>24*1024*1024&&this._cache.size){const [key,item]=this._cache.entries().next().value;this._cache.delete(key);this._cacheBytes-=item.bytes;}
+          if(bytes<=24*1024*1024){this._cache.set(feature._id,{parts,bytes});this._cacheBytes+=bytes;}
+          return parts;
+        },
+        redraw(){
+          if(!this._map||!this._context)return;
+          cancelAnimationFrame(this._frame);this._generation++;const generation=this._generation;
+          this._clearTooltip();this._moving=false;this._drawing=true;this._grid=new Map();this._drawn=new Map();
+          const map=this._map,size=map.getSize(),zoom=map.getZoom(),topLeft=map.containerPointToLayerPoint(L.point(0,0)),origin=map.getPixelOrigin().add(topLeft);
+          if(this._cacheZoom!==zoom){this._cache.clear();this._cacheBytes=0;this._cacheZoom=zoom;}
+          const ratio=Math.min(window.devicePixelRatio||1,2),canvas=this._canvas,ctx=this._context;
+          canvas.width=Math.round(size.x*ratio);canvas.height=Math.round(size.y*ratio);canvas.style.width=size.x+'px';canvas.style.height=size.y+'px';canvas.style.visibility='';
+          L.DomUtil.setPosition(canvas,topLeft);ctx.setTransform(ratio,0,0,ratio,0,0);ctx.lineCap='round';ctx.lineJoin='round';ctx.globalCompositeOperation='source-over';
+          const bounds=map.getBounds().pad(.02),west=bounds.getWest(),east=bounds.getEast(),south=bounds.getSouth(),north=bounds.getNorth();
+          const progress=byId('map-progress'),total=this._features.length;let index=0;
+          progress.hidden=!total;
+          const drawBatch=()=>{
+            if(generation!==this._generation||!this._map)return;
+            const started=performance.now();
+            while(index<total&&performance.now()-started<10){
+              const feature=this._features[index++],box=feature._bounds;
+              if(box[2]<west||box[0]>east||box[3]<south||box[1]>north)continue;
+              const style=featureStyle(feature),parts=this._projected(feature,zoom),segments=[],cells=new Set(),screenBounds=[Infinity,Infinity,-Infinity,-Infinity];
+              for(const part of parts)for(let i=2;i<part.length;i+=2){
+                const segment=ODGeometry.clip(part[i-2]-origin.x,part[i-1]-origin.y,part[i]-origin.x,part[i+1]-origin.y,size.x,size.y,Math.max(8,style.weight/2+1));
+                if(!segment)continue;
+                segments.push(...segment);
+                for(let j=0;j<4;j+=2){screenBounds[0]=Math.min(screenBounds[0],segment[j]);screenBounds[1]=Math.min(screenBounds[1],segment[j+1]);screenBounds[2]=Math.max(screenBounds[2],segment[j]);screenBounds[3]=Math.max(screenBounds[3],segment[j+1]);}
+                for(const cell of ODGeometry.gridCells(...segment))cells.add(cell);
+              }
+              if(!segments.length)continue;
+              ctx.strokeStyle=style.color;ctx.lineWidth=style.weight;ctx.globalAlpha=style.opacity;ctx.beginPath();
+              for(let i=0;i<segments.length;i+=4){ctx.moveTo(segments[i],segments[i+1]);ctx.lineTo(segments[i+2],segments[i+3]);}ctx.stroke();
+              this._drawn.set(feature._id,{segments:Float64Array.from(segments),bounds:screenBounds,weight:style.weight});
+              for(const cell of cells){if(!this._grid.has(cell))this._grid.set(cell,[]);this._grid.get(cell).push(feature._id);}
+            }
+            if(index<total){progress.textContent='Drawing routes… '+Math.round(index/total*100)+'%';this._frame=requestAnimationFrame(drawBatch);}
+            else{this._drawing=false;progress.hidden=true;}
+          };
+          this._frame=requestAnimationFrame(drawBatch);
+        },
+        _nearest(point){
+          if(this._moving||this._drawing||!flowsVisible())return null;
+          const x=Math.floor(point.x/64),y=Math.floor(point.y/64),candidates=new Set();
+          for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(const id of this._grid.get((x+dx)+':'+(y+dy))||[])candidates.add(id);
+          let closest=null,distance=Infinity;
+          for(const id of candidates){
+            const item=this._drawn.get(id),radius=Math.max(6,item.weight/2+3),box=item.bounds;
+            if(point.x<box[0]-radius||point.x>box[2]+radius||point.y<box[1]-radius||point.y>box[3]+radius)continue;
+            const segments=item.segments;
+            for(let i=0;i<segments.length;i+=4){
+              const d=ODGeometry.segmentDistanceSquared(point.x,point.y,segments[i],segments[i+1],segments[i+2],segments[i+3]);
+              if(d<=radius*radius&&d<=distance){distance=d;closest=this._lookup.get(id);}
+            }
+          }
+          return closest;
+        },
+        _hover(event){
+          this._hoverEvent=event;if(this._hoverFrame)return;
+          this._hoverFrame=requestAnimationFrame(()=>{
+            this._hoverFrame=null;if(!this._map)return;
+            const current=this._hoverEvent,feature=this._nearest(current.containerPoint);
+            if(!feature){this._clearTooltip();return;}
+            const trips=state.mapping.trips?num(feature.properties[state.mapping.trips]):null;
+            if(!this._tooltip)this._tooltip=L.tooltip({className:'flow-tip',direction:'top',offset:[0,-7]});
+            this._tooltip.setContent('<strong>'+esc(endpointName(feature,'a'))+' ↔ '+esc(endpointName(feature,'b'))+'</strong>'+esc(labelFor(state.mapping.trips))+': '+esc(format(trips))).setLatLng(current.latlng);
+            if(!this._map.hasLayer(this._tooltip))this._tooltip.addTo(this._map);this._map.getContainer().style.cursor='pointer';
+          });
+        },
+        _clearTooltip(){
+          cancelAnimationFrame(this._hoverFrame);this._hoverFrame=null;
+          if(this._map){if(this._tooltip&&this._map.hasLayer(this._tooltip))this._map.removeLayer(this._tooltip);this._map.getContainer().style.cursor='';}
+        },
+        _click(event){const feature=this._nearest(event.containerPoint);if(feature)selectFeature(feature,false);}
+      });
+      return new FlowCanvas();
+    }
+    function renderMap(){
+      if(!map)return;
+      if(!state.layer)state.layer=createFlowLayer().addTo(map);
+      state.layer.setFeatures(state.filtered);
+      const showCities=byId('show-cities').checked,showLabels=byId('show-labels').checked;
+      if(state.citiesFor!==state.filtered||state.cityLabels!==showLabels||state.citiesShown!==showCities){
+        if(state.points){map.removeLayer(state.points);state.points=null;}
+        state.citiesFor=state.filtered;state.cityLabels=showLabels;state.citiesShown=showCities;
+        if(showCities&&state.filtered.length){
+          const points=new Map();
+          for(const feature of state.filtered)for(const [role,index] of [['a',0],['b',2]]){
+            const props=feature.properties,lon=num(props[role+'_lon']),lat=num(props[role+'_lat']);
+            const xy=lon!==null&&lat!==null&&Math.abs(lon)<=180&&Math.abs(lat)<=90?[lon,lat]:feature._endpoints.slice(index,index+2);
+            const name=endpointName(feature,role),id=props[role+'_census_geoid']??props[role+'_id'];
+            const key=ODCore.missing(id)?name+'|'+xy[0].toFixed(6)+','+xy[1].toFixed(6):String(id);
+            if(!points.has(key))points.set(key,{xy,name});
+          }
+          state.points=L.layerGroup([...points.values()].map(({xy,name})=>{
+            const dot=L.circleMarker([xy[1],xy[0]],{pane:'endpointPane',radius:3.3,color:'#7c532a',weight:1,fillColor:'#ffda40',fillOpacity:1,bubblingMouseEvents:false});
+            dot.bindTooltip(esc(name),{permanent:showLabels,direction:'right',className:showLabels?'city-label':''});return dot;
+          })).addTo(map);
+        }
+      }
+      highlightSelected();
+    }
+    function fitMap(feature){
+      if(!map)return;
+      const features=feature?[feature]:state.filtered;if(!features.length)return;
+      const bounds=L.latLngBounds([]);
+      for(const f of features){const box=f._bounds;bounds.extend([box[1],box[0]]);bounds.extend([box[3],box[2]]);}
+      if(bounds.isValid())map.fitBounds(bounds,{paddingTopLeft:[byId('workspace').classList.contains('left-hidden')?35:Number(getComputedStyle(document.documentElement).getPropertyValue('--left').replace('px',''))+35,65],paddingBottomRight:[30,35],maxZoom:feature?11:8});
+    }
+    byId('fit-map').onclick=()=>fitMap();
+    function highlightSelected(){
+      if(!map)return;if(state.selection){map.removeLayer(state.selection);state.selection=null;}
+      const selected=state.filtered.find(f=>f._id===state.selected);
+      if(selected&&flowsVisible())state.selection=L.geoJSON({type:'Feature',properties:{},geometry:ODGeometry.geometry(selected,state.precision)},{pane:'selectionPane',interactive:false,style:{color:'#fff5da',weight:Number(byId('width').value)+3,opacity:1,interactive:false}}).addTo(map);
+    }
+    function renderTable(){
+      const sorted=sortedFeatures(),pages=Math.max(1,Math.ceil(sorted.length/state.pageSize));state.page=Math.min(state.page,pages-1);
+      const start=state.page*state.pageSize,rows=sorted.slice(start,start+state.pageSize);
+      const populationColumns=byId('table-population').checked;
+      byId('table-body').innerHTML=rows.length?rows.map(f=>'<tr data-id="'+f._id+'" tabindex="0" aria-label="Inspect '+esc(endpointName(f,'a'))+' and '+esc(endpointName(f,'b'))+'"'+(f._id===state.selected?' class="selected"':'')+'><td title="'+esc(endpointName(f,'a'))+'">'+esc(endpointName(f,'a'))+'</td><td title="'+esc(endpointName(f,'b'))+'">'+esc(endpointName(f,'b'))+'</td><td class="numeric">'+esc(format(state.mapping.trips?num(f.properties[state.mapping.trips]):null))+'</td>'+(state.mapping.distance?'<td class="numeric">'+esc(format(num(f.properties[state.mapping.distance])))+'</td>':'')+(populationColumns&&state.mapping.populationA?'<td class="numeric">'+esc(format(num(f.properties[state.mapping.populationA])))+'</td>':'')+(populationColumns&&state.mapping.populationB?'<td class="numeric">'+esc(format(num(f.properties[state.mapping.populationB])))+'</td>':'')+'</tr>').join(''):'<tr><td colspan="6" class="empty-row">'+(state.features.length?'No city pairs match these filters.':'Opening the Texas dataset…<br>Click a route or row to inspect all attributes.')+'</td></tr>';
+      byId('page-summary').textContent=sorted.length?format(start+1)+'–'+format(Math.min(start+state.pageSize,sorted.length))+' of '+format(sorted.length):'0 pairs';
+      byId('previous-page').disabled=state.page===0;byId('next-page').disabled=state.page>=pages-1;
+      for(const key of ['a','b','trips','distance','populationA','populationB'])byId('sort-'+key).textContent=state.sort===key?(state.sortDirection===1?'↑':'↓'):'';
+      document.querySelector('[data-sort="trips"]').title=state.mapping.trips?labelFor(state.mapping.trips):'Weekday trips';
+    }
+    byId('table-body').onclick=event=>{const row=event.target.closest('tr[data-id]');if(row)selectFeature(state.features[Number(row.dataset.id)],true);};
+    byId('table-body').onkeydown=event=>{if(event.key==='Enter'||event.key===' '){const row=event.target.closest('tr[data-id]');if(row){event.preventDefault();selectFeature(state.features[Number(row.dataset.id)],true);}}};
+    document.querySelectorAll('[data-sort]').forEach(button=>button.onclick=()=>{const key=button.dataset.sort;if(state.sort===key)state.sortDirection*=-1;else{state.sort=key;state.sortDirection=['trips','distance','populationA','populationB'].includes(key)?-1:1;}state.page=0;renderTable();});
+    byId('previous-page').onclick=()=>{state.page--;renderTable();};byId('next-page').onclick=()=>{state.page++;renderTable();};
+    function selectFeature(feature,fit){
+      if(!feature)return;state.selected=feature._id;const selectedIndex=sortedFeatures().findIndex(item=>item._id===feature._id);if(selectedIndex>=0)state.page=Math.floor(selectedIndex/state.pageSize);highlightSelected();renderTable();if(fit)fitMap(feature);
+      byId('detail-title').textContent=endpointName(feature,'a')+' ↔ '+endpointName(feature,'b');
+      let metrics='';
+      if(state.mapping.trips)metrics+='<div><strong>'+esc(format(num(feature.properties[state.mapping.trips])))+'</strong><small>'+esc(labelFor(state.mapping.trips))+'</small></div>';
+      if(state.mapping.distance)metrics+='<div><strong>'+esc(format(num(feature.properties[state.mapping.distance])))+'</strong><small>Road miles</small></div>';
+      for(const [key,role] of [['populationA','a'],['populationB','b']])if(state.mapping[key])metrics+='<div><strong>'+esc(format(num(feature.properties[state.mapping[key]])))+'</strong><small>'+esc(endpointName(feature,role))+' · population (2024)</small></div>';
+      byId('detail-metrics').innerHTML=metrics;
+      byId('detail-body').innerHTML=Object.entries(feature.properties).map(([key,value])=>'<tr><th scope="row" title="'+esc(key)+'">'+esc(labelFor(key))+'</th><td>'+esc(display(value))+'</td></tr>').join('');
+      byId('detail-dialog').showModal();
+    }
+    byId('color-field').onchange=()=>{state.colorField=byId('color-field').value;updateLegend();renderMap();};
+    byId('line-color').oninput=()=>{updateLegend();queueAppearance();};
+    byId('overlap-preset').onclick=()=>{byId('opacity-number').value='5';byId('opacity-number').oninput();};
+    for(const id of ['classification','classes'])byId(id).onchange=()=>{updateLegend();renderMap();};
+    for(const id of ['show-flows','show-cities','show-labels','scale-width'])byId(id).onchange=()=>{renderMap();updateStatus();};
+    let appearanceTimer;
+    function queueAppearance(){clearTimeout(appearanceTimer);appearanceTimer=setTimeout(()=>{renderMap();updateStatus();},60);}
+    function bindAppearance(id,min,max,unit){
+      const slider=byId(id),input=byId(id+'-number'),error=byId(id+'-error');
+      function apply(source,dragging=false){
+        let value=num(source.value);
+        if(value===null||value<min||value>max){input.setAttribute('aria-invalid','true');error.textContent='Enter a value from '+min+' to '+max+(unit==='%'?'%.':' px.');return;}
+        if(dragging)value=Math.round(value*100)/100;
+        slider.value=String(value);if(source===slider)input.value=String(value);
+        input.setAttribute('aria-invalid','false');error.textContent='';byId(id+'-value').textContent=String(value)+unit;
+        queueAppearance();
+      }
+      slider.oninput=()=>apply(slider,true);input.oninput=()=>apply(input);input.onchange=()=>apply(input);
+    }
+    bindAppearance('opacity',0,100,'%');bindAppearance('width',.25,12,' px');
+    function download(contents,mime,extension,filename=state.datasetId+'_filtered'){
+      const blob=contents instanceof Blob?contents:new Blob([contents],{type:mime}),url=URL.createObjectURL(blob),link=document.createElement('a');
+      link.href=url;link.download=filename.replace(/[^a-z0-9_-]/gi,'_')+'.'+extension;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+    }
+    byId('export-csv').onclick=()=>download(ODCore.csv(sortedFeatures(),state.fields.map(f=>f.key)),'text/csv;charset=utf-8','csv');
+    byId('export-geojson').onclick=async()=>{
+      if(state.exporting||!state.filtered.length)return;
+      const features=state.filtered,precision=state.precision,filename=state.datasetId+'_filtered',parts=['{"type":"FeatureCollection","features":['];let chunk='';
+      state.exporting=true;byId('export-csv').disabled=true;byId('export-geojson').disabled=true;byId('dataset-switch').disabled=true;
+      try{
+        for(let i=0;i<features.length;i++){
+          const feature=features[i];chunk+=(i?',':'')+JSON.stringify({type:'Feature',geometry:ODGeometry.geometry(feature,precision),properties:feature.properties});
+          if(chunk.length>1024*1024){parts.push(new Blob([chunk]));chunk='';}
+          if(i%250===0){notify('Preparing GeoJSON… '+format(i+1)+' of '+format(features.length)+' pairs',true);await tick();}
+        }
+        if(chunk)parts.push(new Blob([chunk]));parts.push(']}');
+        download(new Blob(parts,{type:'application/geo+json'}),'application/geo+json','geojson',filename);notify('GeoJSON export ready.');
+      }catch(error){notify('Export could not finish. '+error.message,true);}
+      finally{state.exporting=false;byId('export-csv').disabled=!state.filtered.length;byId('export-geojson').disabled=!state.filtered.length;byId('dataset-switch').disabled=CONFIG.datasets.length<2||state.loading;}
+    };
+    updateLegend();
+    loadDataset(CONFIG.datasets[0].id);
+  })();
+  
+  </script>
+</body>
+</html>
